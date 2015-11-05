@@ -8,13 +8,11 @@ function [ result ] = tnm034( im )
 
 % I'm done. Fix it all, boys!
 
-end
+    processedImage = detectFace(im);
 
-image workingimage;
+    result = false;
+    if processedImage ~= zeros()
+        result = compareToDB(processedImage);
+    end
 
-workingimage = detect_face(im);
-
-result = false;
-if( workingimage != 0)
-    result = comparetoDB(workingimage);
 end

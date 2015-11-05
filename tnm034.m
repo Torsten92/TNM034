@@ -11,7 +11,7 @@ function [ result ] = tnm034( im )
     processedImage = detectFace(im);
 
     result = false;
-    if processedImage ~= 0
+    if processedImage ~= zeros(size(processedimage))
         result = compareToDB(processedImage);
     end
 
