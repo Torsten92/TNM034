@@ -1,5 +1,5 @@
 %function [image] = detectFace(im)
-im = imread('images\DB0\db0_1.jpg');
+im = imread('images/DB2/il_12.jpg');
 [row, col] = size(im);
 hsvImage = rgb2hsv(im);
 luminanceImage = hsvImage(:,:,3);

@@ -1,59 +1,133 @@
-im = imread('images/DB0/db0_4.jpg');
+im = imread('images/DB0/db0_1.jpg');
 
-im2 = whiteBalance(im);
+lightingCompImg = whiteBalance(im);
 
-im2 = rgb2ycbcr(im2);
+lightingCompImg = imag_improve_rgb(lightingCompImg);
 
-im2Y = im2double(im2(:,:,1));
-im2Cb = im2double(im2(:,:,2));
-im2Cr = im2double(im2(:,:,3));
+cbcrIm = rgb2ycbcr(lightingCompImg);
 
-faceMask = im2Cr./im2Y - im2Cb./im2Y > 0.10;
+[out bin] = generate_skinmap(lightingCompImg);
 
-faceMask = imfill(faceMask, 'holes');
-figure;
-imshow(faceMask);
+
+Y = double(cbcrIm(:,:,1));
+Cb = double(cbcrIm(:,:,2));
+Cr = double(cbcrIm(:,:,3));
+
+
+
+%imshow(im);
+%figure; imshow(lightingCompImg);
+figure; imshow(bin);
+
+
+
+%skinRegion = (Cb/Y)-(Cr/Y) > 0.09;
+skinRegion = bin;
+
+
+
+
+%find white parts = red dots
+[rowSkinColor, colSkinColor] = find(skinRegion == 1);
+
+%find black parts = blue dots
+[rowRepColor, colRepColor] = find(skinRegion == 0);
+
+
+[skinColLenth, ~] = size(rowSkinColor);
+[repColLenth, ~] = size(rowRepColor);
+
+skinColorY = zeros(skinColLenth,1);
+skinColorCb = zeros(skinColLenth,1);
+skinColorCr = zeros(skinColLenth,1);
+
+repColorY = zeros(repColLenth,1);
+repColorCb = zeros(repColLenth,1);
+repColorCr = zeros(repColLenth,1);
+
+
+%find skin color value in lightComp image with skin color positions 
+
+for i = 1:skinColLenth
+    skinColorY(i,1) = Y(rowSkinColor(i),colSkinColor(i));
+    skinColorCr(i,1) = Cr(rowSkinColor(i),colSkinColor(i));
+    skinColorCb(i,1) = Cb(rowSkinColor(i),colSkinColor(i));
+end
+
+%figure
+%imshow(skinColorCr/255)
+
+for i = 1:repColLenth
+    repColorCb(i,1) = Cb(rowRepColor(i),colRepColor(i));
+    repColorCr(i,1) = Cr(rowRepColor(i),colRepColor(i));
+    repColorY(i,1) = Y(rowRepColor(i),colRepColor(i));
+end
+
+
+figure
+plot3(skinColorCb,skinColorCr,skinColorY,'.r');
+xlabel('Cb') % x-axis label
+ylabel('Cr') % y-axis label
+zlabel('Y') % y-axis label
+
+hold on
+
+plot3(repColorCb,repColorCr,repColorY,'.b');
+
+figure
+plot(skinColorCb./skinColorY,skinColorCr./skinColorY,'.r');
+xlabel('Cb') % x-axis label
+ylabel('Cr') % y-axis label
+
+hold on
+
+plot(repColorCb./repColorY,repColorCr./repColorY,'.b');
+
+%fill holes like eyse
+groupedSkinArea = imfill(skinRegion, 'holes');
+
+imshow(groupedSkinArea);
 
 se = strel('disk', 3);
 se2 = strel('disk', 9);
 se3 = strel('disk', 6);
 
-dilateFace = imerode(imdilate(imerode(faceMask, se), se2), se3);
-dilateFace = imfill(dilateFace, 'holes');
+%remove noise
+faceMask = imerode(imdilate(imerode(groupedSkinArea, se), se2), se3);
+faceMask = imfill(faceMask, 'holes');
 
 im2 = im2double(im);
 im2r = im2(:,:,1);
 im2g = im2(:,:,2);
 im2b = im2(:,:,3);
-im2r(im2r > dilateFace) = 0;
-im2g(im2g > dilateFace) = 0;
-im2b(im2b > dilateFace) = 0;
+im2r(im2r > faceMask) = 0;
+im2g(im2g > faceMask) = 0;
+im2b(im2b > faceMask) = 0;
 im2 = cat(3, im2r, im2g, im2b);
 
 figure;
-imshow(im2);
+imshow(faceMask);
 
-horizontalProfile = mean(dilateFace, 1) > 0.01; % Or whatever.
+
+%%cuts away background
+horizontalProfile = mean(faceMask, 1) > 0.01; % Or whatever.
 firstColumn = find(horizontalProfile, 1, 'first');
 lastColumn = find(horizontalProfile, 1, 'last');
-verticalProfile = mean(dilateFace, 2) > 0.01; % Or whatever.
+verticalProfile = mean(faceMask, 2) > 0.01; % Or whatever.
 firstRow = find(verticalProfile, 1, 'first');
 lastRow = find(verticalProfile, 1, 'last');
 subImage = im(firstRow:lastRow, firstColumn:lastColumn,:);
-%%
+subFaceMask = faceMask(firstRow:lastRow, firstColumn:lastColumn,:);
 
-%MouthDetection
 
-subImage = rgb2ycbcr(subImage);
+%%  mouth map
+subImageYCbCr = rgb2ycbcr(subImage);
 
-im2Y = im2double(subImage(:,:,1));
-im2Cb = im2double(subImage(:,:,2));
-im2Cr = im2double(subImage(:,:,3));
+im2Y = im2double(subImageYCbCr(:,:,1));
+im2Cb = im2double(subImageYCbCr(:,:,2));
+im2Cr = im2double(subImageYCbCr(:,:,3));
 
-figure
-imshow(im2Cr);
-figure
-imshow(im2Cb);
+
 
 %calculate n, "eta"
 chromaLength = size(im2Cr(:), 1);
@@ -63,47 +137,57 @@ n = 0.95 *( top./bot );
 
 %calculate mouthmask 
 mouthMask = ((im2Cr.*im2Cr) .* (((im2Cr.*im2Cr) - n.*(im2Cr./im2Cb)).^2));
-
+mouthMask = mouthMask./max(mouthMask(:));
+mouthMask = mouthMask > 0.4;
 %show mask and the "cleaned" image
 figure
-imshow(mouthMask./(max(mouthMask(:))));
-%%
-se = strel('disk', 1);
-se2 = strel('disk', 1);
-se3 = strel('disk', 1);
+
+imshow(mouthMask);  
+
+se = strel('disk', 2);
+se2 = strel('disk', 6);
+se3 = strel('disk', 4);
 dilateFace = imerode(imdilate(imerode(mouthMask, se),se2),se3);
 
 figure
 imshow(dilateFace);
-
-
-%{
-%Eye Detection
 %%
+
+
+%Eye Detection
 %Chrominance eyeMap
 
 Cb2 = im2Cb.*im2Cb;
-Cr2 = (1-im2Cr).*(1-im2Cr);
+Cr2 = (1-im2Cr).^2;%*(1-im2Cr);
 CbCr = im2Cb./im2Cr;
 eyeMapC = (1/3) .* (Cb2 +Cr2+CbCr);
 
+%histogram equalization
+eyeMapHq = histeq(eyeMapC);
+
+
+
 %Luminance eyeMap
-se4 = strel('disk', 1);
+se4 = strel('disk', 3);
 eyeMapL = imdilate(im2Y, se4)./(imerode(im2Y,se4)+1);
 
-
-imshow(eyeMapC);
+figure
+imshow(eyeMapHq);
 figure
 imshow(eyeMapL);
-figure
+
 
 
 %full eyeMap
-eyeMap = eyeMapC.*eyeMapL;
+eyeMap = eyeMapHq.*eyeMapL;
 %imshow(eyeMap);
-se5 = strel('disk', 1);
+se5 = strel('disk', 10);
 dilatedEyeMap = imdilate(eyeMap, se5);
-imshow(dilatedEyeMap);
+
+
+
+figure
+imshow((dilatedEyeMap.*subFaceMask)>.5);
 
 
 %%
