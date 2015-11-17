@@ -138,18 +138,46 @@ n = 0.95 *( top./bot );
 %calculate mouthmask 
 mouthMask = (im2Cr.*im2Cr) .* ((im2Cr.*im2Cr) - n.*(im2Cr./im2Cb)).^2;
 mouthMask = mouthMask./max(mouthMask(:));
-mouthMask = mouthMask > 0.4;
+%mouthMask = mouthMask > 0.4;
 %show mask and the "cleaned" image
-figure
-imshow(mouthMask);  
+ 
 
 se = strel('disk', 2);
 se2 = strel('disk', 6);
 se3 = strel('disk', 4);
 dilateFace = imerode(imdilate(imerode(mouthMask, se),se2),se3);
 
+
+CrDCb = im2Cr./im2Cb;
+norm = max(max(CrDCb));
+CrDCb = CrDCb./norm;
+
+CrMCr = im2Cr.*im2Cr;
+norm = max(max(CrMCr));
+CrMCr = CrMCr./norm;
+
 figure
-imshow(dilateFace);
+x = linspace(-5,5);
+y1 = sin(x);
+subplot(2,2,1)
+imshow(CrDCb);
+title('Cr/Cb')
+
+y2 = sin(2*x);
+subplot(2,2,2)
+imshow(CrMCr);
+title('(Cr)²')
+
+y3 = sin(4*x);
+subplot(2,2,3)
+imshow(mouthMask);
+title('mouthMask')
+
+y4 = sin(6*x);
+subplot(2,2,4)
+imshow(dilateFace.*subFaceMask);
+title('dilated & masked')
+
 
 
 %%
