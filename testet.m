@@ -1,8 +1,8 @@
-im = imread('images/DB0/db0_3.jpg');
+im = imread('images/DB1/db1_07.jpg');
 
 lightingCompImg = whiteBalance(im);
 
-lightingCompImg = imag_improve_rgb(lightingCompImg);
+%lightingCompImg = imag_improve_rgb(im);
 
 cbcrIm = rgb2ycbcr(lightingCompImg);
 
@@ -18,10 +18,6 @@ Cr = double(cbcrIm(:,:,3));
 %imshow(im);
 %figure; imshow(lightingCompImg);
 
-
-
-
-%skinRegion = (Cb/Y)-(Cr/Y) > 0.09;
 skinRegion = bin;
 
 
@@ -156,8 +152,8 @@ bot = ((1/chromaLength) * sum(im2Cr(:)./im2Cb(:)));
 n = 0.95 *( top./bot );
 
 %calculate mouthmask 
-mouthMask = (im2Cr.*im2Cr) .* ((im2Cr.*im2Cr) - n.*(im2Cr./im2Cb)).^2;
-mouthMask = mouthMask./max(mouthMask(:));
+mouthMap = (im2Cr.*im2Cr) .* ((im2Cr.*im2Cr) - n.*(im2Cr./im2Cb)).^2;
+mouthMap = mouthMap./max(mouthMap(:));
 %mouthMask = mouthMask > 0.4;
 %show mask and the "cleaned" image
  
@@ -165,7 +161,7 @@ mouthMask = mouthMask./max(mouthMask(:));
 se = strel('disk', 1);
 se2 = strel('disk', 4);
 se3 = strel('disk', 3);
-dilateFace = imdilate(mouthMask,se2);
+dilateFace = imdilate(mouthMap,se2);
 
 
 CrDCb = im2Cr./im2Cb;
@@ -190,12 +186,12 @@ title('(Cr)²')
 
 y3 = sin(4*x);
 subplot(2,2,3)
-imshow(mouthMask);
-title('mouthMask')
+imshow(mouthMap);
+title('mouthMap')
 
 y4 = sin(6*x);
 subplot(2,2,4)
-imshow(dilateFace.*subFaceMask);
+imshow(dilateFace);
 title('dilated & masked')
 
 
@@ -249,7 +245,7 @@ title('eyeMap')
 
 y4 = sin(6*x);
 subplot(2,2,4)
-imshow((dilatedEyeMap.*subFaceMask));
+imshow((dilatedEyeMap));
 title('dilated and masked')
 
 %%
