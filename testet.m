@@ -1,4 +1,4 @@
-im = imread('images/DB0/db0_1.jpg');
+im = imread('images/DB0/db0_4.jpg');
 
 lightingCompImg = whiteBalance(im);
 
@@ -136,12 +136,11 @@ bot = ((1/chromaLength) * sum(im2Cr(:)./im2Cb(:)));
 n = 0.95 *( top./bot );
 
 %calculate mouthmask 
-mouthMask = ((im2Cr.*im2Cr) .* (((im2Cr.*im2Cr) - n.*(im2Cr./im2Cb)).^2));
+mouthMask = (im2Cr.*im2Cr) .* ((im2Cr.*im2Cr) - n.*(im2Cr./im2Cb)).^2;
 mouthMask = mouthMask./max(mouthMask(:));
 mouthMask = mouthMask > 0.4;
 %show mask and the "cleaned" image
 figure
-
 imshow(mouthMask);  
 
 se = strel('disk', 2);
@@ -151,11 +150,13 @@ dilateFace = imerode(imdilate(imerode(mouthMask, se),se2),se3);
 
 figure
 imshow(dilateFace);
+
+
 %%
 
 
 %Eye Detection
-%Chrominance eyeMap
+%Chrominance eyeMapC
 
 Cb2 = im2Cb.*im2Cb;
 Cr2 = (1-im2Cr).^2;%*(1-im2Cr);
@@ -167,15 +168,10 @@ eyeMapHq = histeq(eyeMapC);
 
 
 
-%Luminance eyeMap
-se4 = strel('disk', 3);
+%Luminance eyeMapL
+se4 = strel('disk', 4);
 eyeMapL = imdilate(im2Y, se4)./(imerode(im2Y,se4)+1);
-
-figure
-imshow(eyeMapHq);
-figure
-imshow(eyeMapL);
-
+eyeMapL = eyeMapL/max(eyeMapL(:));
 
 
 %full eyeMap
@@ -184,11 +180,29 @@ eyeMap = eyeMapHq.*eyeMapL;
 se5 = strel('disk', 10);
 dilatedEyeMap = imdilate(eyeMap, se5);
 
-
-
+norm = max(max(dilatedEyeMap));
+dilatedEyeMap = dilatedEyeMap./norm;
 figure
-imshow((dilatedEyeMap.*subFaceMask)>.5);
+x = linspace(-5,5);
+y1 = sin(x);
+subplot(2,2,1)
+imshow(eyeMapHq);
+title('eyeMapC')
 
+y2 = sin(2*x);
+subplot(2,2,2)
+imshow(eyeMapL);
+title('eyeMapL')
+
+y3 = sin(4*x);
+subplot(2,2,3)
+imshow(eyeMap);
+title('eyeMap')
+
+y4 = sin(6*x);
+subplot(2,2,4)
+imshow((dilatedEyeMap.*subFaceMask));
+title('dilated and masked')
 
 %%
 
