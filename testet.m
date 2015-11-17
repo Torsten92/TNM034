@@ -1,4 +1,4 @@
-im = imread('images/DB0/db0_4.jpg');
+im = imread('images/DB0/db0_3.jpg');
 
 lightingCompImg = whiteBalance(im);
 
@@ -17,7 +17,7 @@ Cr = double(cbcrIm(:,:,3));
 
 %imshow(im);
 %figure; imshow(lightingCompImg);
-figure; imshow(bin);
+
 
 
 
@@ -86,7 +86,6 @@ plot(repColorCb./repColorY,repColorCr./repColorY,'.b');
 %fill holes like eyse
 groupedSkinArea = imfill(skinRegion, 'holes');
 
-imshow(groupedSkinArea);
 
 se = strel('disk', 3);
 se2 = strel('disk', 9);
@@ -105,9 +104,6 @@ im2g(im2g > faceMask) = 0;
 im2b(im2b > faceMask) = 0;
 im2 = cat(3, im2r, im2g, im2b);
 
-figure;
-imshow(faceMask);
-
 
 %%cuts away background
 horizontalProfile = mean(faceMask, 1) > 0.01; % Or whatever.
@@ -118,6 +114,30 @@ firstRow = find(verticalProfile, 1, 'first');
 lastRow = find(verticalProfile, 1, 'last');
 subImage = im(firstRow:lastRow, firstColumn:lastColumn,:);
 subFaceMask = faceMask(firstRow:lastRow, firstColumn:lastColumn,:);
+
+
+
+figure
+x = linspace(-5,5);
+y1 = sin(x);
+subplot(2,2,1)
+imshow(skinRegion);
+title('skinRegion')
+
+y2 = sin(2*x);
+subplot(2,2,2)
+imshow(groupedSkinArea);
+title('groupedSkinArea')
+
+y3 = sin(4*x);
+subplot(2,2,3)
+imshow(faceMask);
+title('faceMask')
+
+y4 = sin(6*x);
+subplot(2,2,4)
+imshow(subFaceMask);
+title('subFaceMask')
 
 
 %%  mouth map
@@ -142,10 +162,10 @@ mouthMask = mouthMask./max(mouthMask(:));
 %show mask and the "cleaned" image
  
 
-se = strel('disk', 2);
-se2 = strel('disk', 6);
-se3 = strel('disk', 4);
-dilateFace = imerode(imdilate(imerode(mouthMask, se),se2),se3);
+se = strel('disk', 1);
+se2 = strel('disk', 4);
+se3 = strel('disk', 3);
+dilateFace = imdilate(mouthMask,se2);
 
 
 CrDCb = im2Cr./im2Cb;
