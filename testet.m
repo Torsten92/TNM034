@@ -1,5 +1,4 @@
-im = imread('images/DB1/db1_07.jpg');
-shapeInserter = vision.ShapeInserter('Shape','Polygons','BorderColor','Custom', 'CustomBorderColor', uint8([255 0 0]));
+im = imread('images/DB1/db1_08.jpg');
 lightingCompImg = whiteBalance(im);
 
 %lightingCompImg = imag_improve_rgb(im);
@@ -25,7 +24,7 @@ figure;imshow(faceMask2);
 
 skinRegion = bin;
 
-skinRegion(faceMask2) = 1;
+%skinRegion(faceMask2) = 1;
 
 figure;imshow(skinRegion);
 
@@ -71,22 +70,24 @@ end
 
 figure
 plot3(skinColorCb,skinColorCr,skinColorY,'.r');
+hold on
 xlabel('Cb') % x-axis label
 ylabel('Cr') % y-axis label
 zlabel('Y') % y-axis label
 
-hold on
 
 plot3(repColorCb,repColorCr,repColorY,'.b');
 
+
+
 figure
 plot(skinColorCb./skinColorY,skinColorCr./skinColorY,'.r');
+hold on
 xlabel('Cb') % x-axis label
 ylabel('Cr') % y-axis label
 
-hold on
-
 plot(repColorCb./repColorY,repColorCr./repColorY,'.b');
+
 
 %fill holes like eyse
 groupedSkinArea = imfill(skinRegion, 'holes');
@@ -138,6 +139,28 @@ title('faceMask')
 subplot(2,2,4)
 imshow(subFaceMask);
 title('subFaceMask')
+
+%%
+CH = edge(faceMask,'canny');
+CH2 = bwlabel(CH,4);
+C = corner(CH);
+[z, a, b, alpha] = fitellipse(C', 'linear');
+
+% Plotting
+
+x0=220; % x0,y0 ellipse centre coordinates
+y0=280;
+t=-pi:0.01:pi;
+elipseX=x0+a*cos(t);
+elipseY=y0+b*sin(t);
+
+
+
+figure
+imshow(CH);
+hold on
+plot(elipseX,elipseY)
+
 
 
 %%  mouth map
@@ -253,8 +276,9 @@ viscircles(c,r);
 eyesCenter =round(c);
 
 polygon = int32([eyesCenter(1,1) eyesCenter(1,2) eyesCenter(2,1) eyesCenter(2,2) xcentre ycentre]); 
-J = step(shapeInserter, subImage, polygon);
-figure;imshow(J); 
+shapeInserter = vision.ShapeInserter('Shape','Polygons','BorderColor','Custom', 'CustomBorderColor', uint8([255 0 0]));
+faceTriangle = step(shapeInserter, subImage, polygon);
+figure;imshow(faceTriangle); 
 
 figure
 
@@ -273,6 +297,8 @@ title('eyeMap')
 subplot(2,2,4)
 imshow((dilatedEyeMap));
 title('dilated and masked')
+
+
 
 %%
 
