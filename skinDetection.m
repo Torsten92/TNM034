@@ -28,7 +28,6 @@ skinRegion = ellipse_mask+circlaMask+skinRegion;
 
 skinRegion(skinRegion ~= 0) = 1;
 
-figure;imshow(skinRegion)
 
 Y = double(cbcrIm(:,:,1));
 Cb = double(cbcrIm(:,:,2));
