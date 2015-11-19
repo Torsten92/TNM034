@@ -5,28 +5,6 @@ cbcrIm = rgb2ycbcr(image);
 
 [~, skinRegion] = generate_skinmap(image);
 
-[sizeX, sizeY] = size(skinRegion);
-
-[x, y] = find(skinRegion);
-
-
-X = [x';
-    y'];
-
-%ellipse mask
-[zt, at, bt, alphat] = fitellipse(X, 'linear', 'constraint', 'trace');
-ellipseC = zt;
-r_sq = [bt, at].^2;
-[X, Y] = meshgrid(1:sizeY, 1:sizeX);
-ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
-
-%sphere mask
-[xc,yx, R] = circfit(y,x);
-circlaMask = bsxfun(@plus, ((1:sizeY) - yx).^2, (transpose(1:sizeX) - xc).^2) < R^2;
-
-skinRegion = ellipse_mask+circlaMask+skinRegion;
-
-skinRegion(skinRegion ~= 0) = 1;
 
 
 Y = double(cbcrIm(:,:,1));
@@ -87,3 +65,29 @@ firstRow = find(verticalProfile, 1, 'first');
 lastRow = find(verticalProfile, 1, 'last');
 subImage = image(firstRow:lastRow, firstColumn:lastColumn,:);
 subFaceMask = faceMask(firstRow:lastRow, firstColumn:lastColumn,:);
+
+
+[sizeX, sizeY] = size(subFaceMask);
+
+[x, y] = find(subFaceMask);
+
+
+X = [x';
+    y'];
+
+%ellipse mask
+[zt, at, bt, alphat] = fitellipse(X, 'linear', 'constraint', 'trace');
+ellipseC = zt;
+r_sq = [bt, at].^2;
+[X, Y] = meshgrid(1:sizeY, 1:sizeX);
+ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
+
+%sphere mask
+
+
+subFaceMask = ellipse_mask+subFaceMask;
+
+subFaceMask=  subFaceMask>0.1;
+
+
+
