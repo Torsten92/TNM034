@@ -1,5 +1,5 @@
-im = imread('images/DB1/db1_07.jpg');
-
+im = imread('images/DB1/db1_10.jpg');
+shapeInserter = vision.ShapeInserter('Shape','Polygons','BorderColor','Custom', 'CustomBorderColor', uint8([255 0 0]));
 lightingCompImg = whiteBalance(im);
 
 %lightingCompImg = imag_improve_rgb(im);
@@ -7,6 +7,7 @@ lightingCompImg = whiteBalance(im);
 cbcrIm = rgb2ycbcr(lightingCompImg);
 
 [out bin] = generate_skinmap(lightingCompImg);
+
 
 
 Y = double(cbcrIm(:,:,1));
@@ -163,6 +164,22 @@ se2 = strel('disk', 4);
 se3 = strel('disk', 3);
 dilateFace = imdilate(mouthMap,se2);
 
+%find mouth center
+detectMouth = dilateFace > 0.3;
+detectMouth = bwareaopen(detectMouth, 600);
+figure;imshow(detectMouth)
+
+[x, y] = meshgrid(1:size(detectMouth, 2), 1:size(detectMouth, 1));
+weightedx = x .* detectMouth;
+weightedy = y .* detectMouth;
+xcentre = sum(weightedx(:)) / sum(detectMouth(:));
+ycentre = sum(weightedy(:)) / sum(detectMouth(:));
+xcentre = round(xcentre);
+ycentre = round(ycentre);
+
+
+
+
 
 CrDCb = im2Cr./im2Cb;
 norm = max(max(CrDCb));
@@ -224,8 +241,23 @@ eyeMap = eyeMapHq.*eyeMapL;
 se5 = strel('disk', 10);
 dilatedEyeMap = imdilate(eyeMap, se5);
 
+%find eyes as a mask
 norm = max(max(dilatedEyeMap));
 dilatedEyeMap = dilatedEyeMap./norm;
+detectEye = dilatedEyeMap>0.85;
+detectEye = bwareaopen(detectEye.*subFaceMask, 170);
+figure;imshow(detectEye)
+
+%subplot into 2 images
+[c,r] = imfindcircles(detectEye,[10,20]);
+figure;imshow(detectEye);
+viscircles(c,r);
+eyesCenter =round(c);
+
+polygon = int32([eyesCenter(1,1) eyesCenter(1,2) eyesCenter(2,1) eyesCenter(2,2) xcentre ycentre]); 
+J = step(shapeInserter, subImage, polygon);
+figure;imshow(J); 
+
 figure
 x = linspace(-5,5);
 y1 = sin(x);
