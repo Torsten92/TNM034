@@ -1,4 +1,4 @@
-im = imread('images/DB1/db1_10.jpg');
+im = imread('images/DB1/db1_07.jpg');
 shapeInserter = vision.ShapeInserter('Shape','Polygons','BorderColor','Custom', 'CustomBorderColor', uint8([255 0 0]));
 lightingCompImg = whiteBalance(im);
 
@@ -14,14 +14,22 @@ Y = double(cbcrIm(:,:,1));
 Cb = double(cbcrIm(:,:,2));
 Cr = double(cbcrIm(:,:,3));
 
+faceMask2 = Cr./Y - Cb./Y > 0.01;
 
+faceMask2 = imfill(faceMask2, 'holes');
+
+figure;imshow(faceMask2);
 
 %imshow(im);
 %figure; imshow(lightingCompImg);
 
 skinRegion = bin;
 
+skinRegion(faceMask2) = 1;
 
+figure;imshow(skinRegion);
+
+%%
 
 
 %find white parts = red dots
