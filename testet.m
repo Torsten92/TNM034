@@ -46,18 +46,18 @@ repColorCr = zeros(repColLenth,1);
 %find skin color value in lightComp image with skin color positions 
 
 for i = 1:skinColLenth
-    skinColorY(i,1) = Y(rowSkinColor(i),colSkinColor(i));
-    skinColorCr(i,1) = Cr(rowSkinColor(i),colSkinColor(i));
-    skinColorCb(i,1) = Cb(rowSkinColor(i),colSkinColor(i));
+        skinColorY(i,1) = Y(rowSkinColor(i),colSkinColor(i));
+        skinColorCr(i,1) = Cr(rowSkinColor(i),colSkinColor(i));
+        skinColorCb(i,1) = Cb(rowSkinColor(i),colSkinColor(i));
 end
 
 %figure
 %imshow(skinColorCr/255)
 
 for i = 1:repColLenth
-    repColorCb(i,1) = Cb(rowRepColor(i),colRepColor(i));
-    repColorCr(i,1) = Cr(rowRepColor(i),colRepColor(i));
-    repColorY(i,1) = Y(rowRepColor(i),colRepColor(i));
+        repColorCb(i,1) = Cb(rowRepColor(i),colRepColor(i));
+        repColorCr(i,1) = Cr(rowRepColor(i),colRepColor(i));
+        repColorY(i,1) = Y(rowRepColor(i),colRepColor(i));
 end
 
 
@@ -115,23 +115,18 @@ subFaceMask = faceMask(firstRow:lastRow, firstColumn:lastColumn,:);
 
 
 figure
-x = linspace(-5,5);
-y1 = sin(x);
 subplot(2,2,1)
 imshow(skinRegion);
 title('skinRegion')
 
-y2 = sin(2*x);
 subplot(2,2,2)
 imshow(groupedSkinArea);
 title('groupedSkinArea')
 
-y3 = sin(4*x);
 subplot(2,2,3)
 imshow(faceMask);
 title('faceMask')
 
-y4 = sin(6*x);
 subplot(2,2,4)
 imshow(subFaceMask);
 title('subFaceMask')
@@ -190,23 +185,18 @@ norm = max(max(CrMCr));
 CrMCr = CrMCr./norm;
 
 figure
-x = linspace(-5,5);
-y1 = sin(x);
 subplot(2,2,1)
 imshow(CrDCb);
 title('Cr/Cb')
 
-y2 = sin(2*x);
 subplot(2,2,2)
 imshow(CrMCr);
 title('(Cr)²')
 
-y3 = sin(4*x);
 subplot(2,2,3)
 imshow(mouthMap);
 title('mouthMap')
 
-y4 = sin(6*x);
 subplot(2,2,4)
 imshow(dilateFace);
 title('dilated & masked')
@@ -259,23 +249,19 @@ J = step(shapeInserter, subImage, polygon);
 figure;imshow(J); 
 
 figure
-x = linspace(-5,5);
-y1 = sin(x);
+
 subplot(2,2,1)
 imshow(eyeMapHq);
 title('eyeMapC')
 
-y2 = sin(2*x);
 subplot(2,2,2)
 imshow(eyeMapL);
 title('eyeMapL')
 
-y3 = sin(4*x);
 subplot(2,2,3)
 imshow(eyeMap);
 title('eyeMap')
 
-y4 = sin(6*x);
 subplot(2,2,4)
 imshow((dilatedEyeMap));
 title('dilated and masked')
