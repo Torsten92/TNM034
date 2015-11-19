@@ -1,3 +1,5 @@
+
+
 im = imread('images/DB1/db1_07.jpg');
 shapeInserter = vision.ShapeInserter('Shape','Polygons','BorderColor','Custom', 'CustomBorderColor', uint8([255 0 0]));
 lightingCompImg = whiteBalance(im);
@@ -6,32 +8,51 @@ lightingCompImg = whiteBalance(im);
 
 cbcrIm = rgb2ycbcr(lightingCompImg);
 
-[out bin] = generate_skinmap(lightingCompImg);
+[out, bin] = generate_skinmap(lightingCompImg);
+skinRegion = bin;
+
+[sizeX, sizeY] = size(skinRegion);
+
+[x, y] = find(skinRegion);
+
+z = y(end:-1:1);
+
+X = [x';
+    y'];
 
 
+[zt, at, bt, alphat] = fitellipse(X, 'linear', 'constraint', 'trace');
+figure;plotellipse(zt,at,bt,alphat);
+
+
+ellipseC = zt;
+r_sq = [bt, at].^2;
+[X, Y] = meshgrid(1:sizeY, 1:sizeX);
+ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
+
+
+
+[xc,yx, R] = circfit(y,x);
+circlaMask = bsxfun(@plus, ((1:sizeY) - yx).^2, (transpose(1:sizeX) - xc).^2) < R^2;
 
 Y = double(cbcrIm(:,:,1));
 Cb = double(cbcrIm(:,:,2));
 Cr = double(cbcrIm(:,:,3));
 
 faceMask2 = Cr./Y - Cb./Y > 0.01;
-
 faceMask2 = imfill(faceMask2, 'holes');
+figure;imshow(ellipse_mask)
+skinRegion = ((circlaMask+skinRegion+ellipse_mask));
 
-figure;imshow(faceMask2);
 
-%imshow(im);
-%figure; imshow(lightingCompImg);
 
-skinRegion = bin;
 
-skinRegion(faceMask2) = 1;
+skinRegion = round((faceMask2+skinRegion)/2);
 
-figure;imshow(skinRegion);
+figure;imshow(skinRegion)
+%%%%%%
 
 %%
-
-
 %find white parts = red dots
 [rowSkinColor, colSkinColor] = find(skinRegion == 1);
 
@@ -274,17 +295,3 @@ subplot(2,2,4)
 imshow((dilatedEyeMap));
 title('dilated and masked')
 
-%%
-
-im2 = im2double(im);
-im2r = im2(:,:,1);
-im2g = im2(:,:,2);
-im2b = im2(:,:,3);
-im2r(im2r > dilateFace) = 0;
-im2g(im2g > dilateFace) = 0;
-im2b(im2b > dilateFace) = 0;
-im2 = cat(3, im2r, im2g, im2b);
-
-figure;
-imshow(im2);
-%}
