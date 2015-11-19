@@ -23,5 +23,8 @@ mouthMap = mouthMap./max(mouthMap(:));
  
 
 se = strel('disk', 4);
-mouthImg = imdilate(mouthMap,se);
+detectMouth = imdilate(mouthMap,se);
 
+
+mouthImg = detectMouth > 0.3;
+mouthImg = bwareaopen(mouthImg, 600);

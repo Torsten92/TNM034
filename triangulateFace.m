@@ -2,14 +2,11 @@ function [corrVal, triImg] = triangulateFace(mouthImg, eyeImg, subImage)
 corrVal = 0;
 
 %find mouth center
-detectMouth = mouthImg > 0.3;
-detectMouth = bwareaopen(detectMouth, 600);
-
-[x, y] = meshgrid(1:size(detectMouth, 2), 1:size(detectMouth, 1));
-weightedx = x .* detectMouth;
-weightedy = y .* detectMouth;
-xcentre = sum(weightedx(:)) / sum(detectMouth(:));
-ycentre = sum(weightedy(:)) / sum(detectMouth(:));
+[x, y] = meshgrid(1:size(mouthImg, 2), 1:size(mouthImg, 1));
+weightedx = x .* mouthImg;
+weightedy = y .* mouthImg;
+xcentre = sum(weightedx(:)) / sum(mouthImg(:));
+ycentre = sum(weightedy(:)) / sum(mouthImg(:));
 xcentre = round(xcentre);
 ycentre = round(ycentre);
 
