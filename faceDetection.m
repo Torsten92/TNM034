@@ -1,6 +1,6 @@
 %function [massa argument] = faceDetection(image)
 
-image = imread('images/testDB/image_0018.jpg');
+image = imread('images/DB1/db1_07.jpg');
 
 image = whiteBalance(image);
 
@@ -13,4 +13,4 @@ image = whiteBalance(image);
 
 [~, triImg] = triangulateFace(mouthImg, eyeImg, subImage);
 
-imshow(triImg)
+figure;imshow(triImg)
