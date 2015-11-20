@@ -6,35 +6,26 @@ function [corrVal] = getCorrelation(img1, img2)
 %cuts away black background
 horizontalProfile = mean(img1, 1) > 0.01; % or whatever
 firstColumn = find(horizontalProfile, 1, 'first');
+lastColumn = find(horizontalProfile, 1, 'last');
 verticalProfile = mean(img1, 2) > 0.01;
 firstRow = find(verticalProfile, 1, 'first');
-subImage1 = img1(firstRow:size(img1,1), firstColumn:size(img1,2));
+lastRow = find(verticalProfile, 1, 'last');
+subImage1 = img1(firstRow:lastRow, firstColumn:lastColumn);
 
 horizontalProfile = mean(img2, 1) > 0.01;
 firstColumn = find(horizontalProfile, 1, 'first');
+lastColumn = find(horizontalProfile, 1, 'last');
 verticalProfile = mean(img2, 2) > 0.01;
 firstRow = find(verticalProfile, 1, 'first');
-subImage2 = img2(firstRow:size(img2,1), firstColumn:size(img2,2));
-
-z = zeros(10000, 10000);
-z(1:size(subImage1, 1), 1:size(subImage1, 2)) = subImage1;
-subImage1 = z;
-z = zeros(10000, 10000);
-z(1:size(subImage2, 1), 1:size(subImage2, 2)) = subImage2;
-subImage2 = z;
-
-% get common size of images
-horizontalProfile = mean(subImage1, 1) > 0.01;
-lastColumn = find(horizontalProfile, 1, 'last');
-horizontalProfile = mean(subImage2, 1) > 0.01;
-lastColumn = int32(max(find(horizontalProfile, 1, 'last'), lastColumn));
-
-verticalProfile = mean(subImage1, 2) > 0.01;
 lastRow = find(verticalProfile, 1, 'last');
-verticalProfile = mean(subImage2, 2) > 0.01;
-lastRow = int32(max(find(verticalProfile, 1, 'last'), lastRow));
-subImage1 = subImage1(1:lastRow, 1:lastColumn);
-subImage2 = subImage2(1:lastRow, 1:lastColumn);
+subImage2 = img2(firstRow:lastRow, firstColumn:lastColumn);
+
+assignin('base', 'subImage1', subImage1);
+assignin('base', 'subImage2', subImage2);
+xDim = max(size(subImage1,1), size(subImage2,1));
+yDim = max(size(subImage1,2), size(subImage2,2));
+subImage1 = imresize(subImage1, [xDim yDim]);
+subImage2 = imresize(subImage2, [xDim yDim]);
 
 imshow(subImage1)
 figure
