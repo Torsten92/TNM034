@@ -17,7 +17,8 @@ mouthImg2 = im2double(image2(:,:,1)).*mouthImg2;
 getCorrelation(mouthImg1, mouthImg2)
 
 %{
-%Get correlation value and save best result
+function [result] = compareToDB(subFaceMask, mouthImg, eyeImg, triImg)
+%Get correlation value and save the best result
 result = 0;
 for i = 1:16
     if(i < 10)
