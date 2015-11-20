@@ -37,7 +37,7 @@ function [out bin] = generate_skinmap(filename)
     Cr = img_ycbcr(:,:,3);
     
     %Detect Skin
-    [r,c,v] = find(Cb>=77 & Cb<=127 & Cr>=133 & Cr<=173);
+    [r,c,v] = find(Cb>=77 & Cb<=130 & Cr>=130 & Cr<=173);
     numind = size(r,1);
     
     %Mark Skin Pixels
