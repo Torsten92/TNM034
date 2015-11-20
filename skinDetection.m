@@ -83,11 +83,11 @@ r_sq = [bt, at].^2;
 ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
 
 %sphere mask
-
-
 subFaceMask = ellipse_mask+subFaceMask;
+subFaceMask=  subFaceMask > 0.1;
 
-subFaceMask=  subFaceMask>0.1;
-
+se = strel('disk', 20);
+subFaceMask = imfill(subFaceMask, 'holes');
+subFaceMask = imdilate(imerode(subFaceMask, se), se);
 
 

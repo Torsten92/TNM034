@@ -12,7 +12,7 @@ ycentre = round(ycentre);
 
 %subplot into 2 images
 [c,r] = imfindcircles(eyeImg,[10,20]);
-viscircles(c, r);
+%viscircles(c, r);
 %figure;imshow(eyeImg);
 
 x1 = 1;
