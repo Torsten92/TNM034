@@ -1,6 +1,6 @@
 %function [massa argument] = faceDetection(image)
 
-image = imread('images/DB1/db1_02.jpg');
+image = imread('images/DB1/db1_15.jpg');
 
 image = whiteBalance(image);
 
