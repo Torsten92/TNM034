@@ -20,15 +20,16 @@ mouthMap = (im2Cr.*im2Cr) .* ((im2Cr.*im2Cr) - n.*(im2Cr./im2Cb)).^2;
 mouthMap = mouthMap./max(mouthMap(:));
 %mouthMask = mouthMask > 0.4;
 %show mask and the "cleaned" image
- 
-
-se = strel('disk', 4);
-detectMouth = imdilate(mouthMap,se);
 
 
-mouthImg = detectMouth > 0.3;
-mouthImg = bwareaopen(mouthImg, 800);
+a = round(sum(size(mouthMap))*0.3)
+mouthImg = mouthMap > 0.35;
+mouthImg = bwareaopen(mouthImg, a);
 
-se = strel('disk', 4);
+
+%Dilate first to fill lips. Erode to remove artefacts
+a = round(a/70);
+se = strel('disk', a);
 mouthImg = imerode(imdilate(mouthImg, se), se);
 mouthImg = imfill(mouthImg, 'holes');
+mouthImg = imdilate(imerode(mouthImg,se),se);
