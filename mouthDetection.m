@@ -1,4 +1,4 @@
-function [corrVal, mouthImg] = mouthDetection(subImage)
+function [corrVal, mouthImg, mouthCenter] = mouthDetection(subImage)
 corrVal = 0;
 
 % mouth map
@@ -22,7 +22,7 @@ mouthMap = mouthMap./max(mouthMap(:));
 %show mask and the "cleaned" image
 
 
-a = round(sum(size(mouthMap))*0.3)
+a = round(sum(size(mouthMap))*0.3);
 mouthImg = mouthMap > 0.35;
 mouthImg = bwareaopen(mouthImg, a);
 
@@ -33,3 +33,15 @@ se = strel('disk', a);
 mouthImg = imerode(imdilate(mouthImg, se), se);
 mouthImg = imfill(mouthImg, 'holes');
 mouthImg = imdilate(imerode(mouthImg,se),se);
+
+%find mouth center
+[x, y] = meshgrid(1:size(mouthImg, 2), 1:size(mouthImg, 1));
+weightedx = x .* mouthImg;
+weightedy = y .* mouthImg;
+xcentre = sum(weightedx(:)) / sum(mouthImg(:));
+ycentre = sum(weightedy(:)) / sum(mouthImg(:));
+xcentre = round(xcentre);
+ycentre = round(ycentre);
+mouthCenter = [xcentre, ycentre]
+    
+
