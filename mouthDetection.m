@@ -1,4 +1,4 @@
-function [corrVal, mouthImg] = mouthDetection(subImage)
+function [corrVal, mouthImg, mouthCenter] = mouthDetection(subImage)
 corrVal = 0;
 
 % mouth map
@@ -8,7 +8,7 @@ im2Y = im2double(subImageYCbCr(:,:,1));
 im2Cb = im2double(subImageYCbCr(:,:,2));
 im2Cr = im2double(subImageYCbCr(:,:,3));
 
-
+%fallowing the equation from "face detection in color image"
 %calculate n, "eta"
 chromaLength = size(im2Cr(:), 1);
 top = ((1/chromaLength) * sum(im2Cr(:).*im2Cr(:)));
@@ -22,7 +22,6 @@ mouthMap = mouthMap./max(mouthMap(:));
 %show mask and the "cleaned" image
 
 [r c] = size(mouthMap);
-
 
 %decide how many pixels a region must have to not be erased 
 %we decided that regions that are has less than 0.23% pixels of the image will be erased (empriskt) 
@@ -47,7 +46,7 @@ stats = regionprops(cc, 'Area','Eccentricity');
 %images mouth region must be bigger than 100 pixels and it's Eccentricity
 %must be greater than 0.84 (empiriskt)
 %Eccentricity is the ratio of the distance between the foci of the ellipse
-%and its major axis lengths, scalär
+%and its major axis lengths, scal�r
 idx = find([stats.Area] > 100 & [stats.Eccentricity] > 0.84); 
 %check labelmatrix(cc) elements that are members of idx
 mouthImg = ismember(labelmatrix(cc), idx);
@@ -65,3 +64,13 @@ numbOfpixels = round(numbOfpixels/70);
 se = strel('disk', numbOfpixels);
 mouthImg = imerode(imdilate(mouthImg, se), se);
 L = imfill(mouthImg, 'holes');
+
+%find mouth center
+[x, y] = meshgrid(1:size(L, 2), 1:size(L, 1));
+weightedx = x .* L;
+weightedy = y .* L;
+xcentre = sum(weightedx(:)) / sum(L(:));
+ycentre = sum(weightedy(:)) / sum(L(:));
+xcentre = round(xcentre);
+ycentre = round(ycentre);
+mouthCenter = [xcentre, ycentre];
