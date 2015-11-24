@@ -15,9 +15,9 @@ image = whiteBalance(image);
 
 %corrVal = compareToDB(subFaceMask, mouthImg, eyeImg, triImg);
 
-%figure
-%imshow(cat(3, mouthImg, mouthImg, mouthImg).*im2double(subImage))
-%imshow(triImg)
+figure
+imshow(cat(3, mouthImg, mouthImg, mouthImg).*im2double(subImage))
+imshow(triImg)
 end
 
 
