@@ -22,7 +22,7 @@ mouthMap = mouthMap./max(mouthMap(:));
 %show mask and the "cleaned" image
 
 
-a = round(sum(size(mouthMap))*0.3)
+a = round(sum(size(mouthMap))*0.3);
 mouthImg = mouthMap > 0.35;
 mouthImg = bwareaopen(mouthImg, a);
 
@@ -42,6 +42,6 @@ xcentre = sum(weightedx(:)) / sum(mouthImg(:));
 ycentre = sum(weightedy(:)) / sum(mouthImg(:));
 xcentre = round(xcentre);
 ycentre = round(ycentre);
-mouthCenter = [xcentre, ycentre]
+mouthCenter = [xcentre, ycentre];
     
 

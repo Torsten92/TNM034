@@ -99,9 +99,32 @@ end
 if(boolFlag ~= row)
     %if there are more than 2 eyes
   
-    %check smallest distance
-
+    
+    
+    
     if(row>2)
+        eye2eye = [1,1;
+                   1,1];
+        for n = 1:row
+            for j = 1:row
+                if(n~=j)
+                    eye2eye=[c(n,1), c(n,2);
+                            c(j,1), c(j,2)];
+                    distance = pdist(eye2eye,'minkowski');
+                    if(distance > (2*r))
+                    else
+                        c(n,1) = round( (c(n,1)+c(j,1))/2);
+                        c(n,2) = round( (c(n,2)+c(j,2))/2);
+                        c(j,1) = sizeX;
+                        c(j,2) = sizeY;
+                    end
+                end
+            end
+        end
+        
+            %check smallest distance
+
+        
         eyesCenter=[mouthCenter(1) mouthCenter(2);
                     1 1];
         %check distance to each eye
