@@ -5,34 +5,6 @@ cbcrIm = rgb2ycbcr(image);
 
 [~, skinRegion] = generate_skinmap(image);
 
-[sizeX, sizeY] = size(skinRegion);
-
-[x, y] = find(skinRegion);
-
-figure
-imshow(skinRegion);
-X = [y';
-    x'];
-
-%ellipse mask
-[zt, at, bt, alphat] = fitellipse(X, 'linear', 'constraint', 'trace');
-ellipseC = zt;
-r_sq = [bt, at].^2;
-[X, Y] = meshgrid(1:sizeY, 1:sizeX);
-ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
-
-figure()
-imshow(image)
-hold on
-plotellipse(zt, at, bt, alphat)
-
-
-
-skinRegion = ellipse_mask+skinRegion;
-
-skinRegion(skinRegion ~= 0) = 1;
-
-
 Y = double(cbcrIm(:,:,1));
 Cb = double(cbcrIm(:,:,2));
 Cr = double(cbcrIm(:,:,3));
@@ -93,23 +65,25 @@ subImage = image(firstRow:lastRow, firstColumn:lastColumn,:);
 subFaceMask = faceMask(firstRow:lastRow, firstColumn:lastColumn,:);
 
 
-%% tottes elips
-CH = edge(faceMask,'canny');
-CH2 = bwlabel(CH,4);
-C = corner(CH);
-[z, a, b, alphaNotUsed] = fitellipse(C', 'linear');
+[sizeX, sizeY] = size(subFaceMask);
 
-% Plotting
-
-x0=220; % x0,y0 ellipse centre coordinates
-y0=280;
-t=-pi:0.01:pi;
-elipseX=x0+a*cos(t);
-elipseY=y0+b*sin(t);
+[x, y] = find(subFaceMask);
 
 
+X = [x';
+    y'];
 
-figure
-imshow(CH);
-hold on
-plot(elipseX,elipseY)
+%ellipse mask
+[zt, at, bt, alphat] = fitellipse(X, 'linear', 'constraint', 'trace');
+ellipseC = zt;
+r_sq = [bt, at].^2;
+[X, Y] = meshgrid(1:sizeY, 1:sizeX);
+ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
+
+%sphere mask
+subFaceMask = ellipse_mask+subFaceMask;
+subFaceMask=  subFaceMask > 0.1;
+
+se = strel('disk', 20);
+subFaceMask = imfill(subFaceMask, 'holes');
+subFaceMask = imdilate(imerode(subFaceMask, se), se);

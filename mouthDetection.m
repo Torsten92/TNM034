@@ -21,6 +21,7 @@ mouthMap = mouthMap./max(mouthMap(:));
 %mouthMask = mouthMask > 0.4;
 %show mask and the "cleaned" image
 
+<<<<<<< HEAD
 [r c] = size(mouthMap);
 
 
@@ -66,11 +67,9 @@ assignin('base', 's', s);
 %erase white regions if it contains less than numbOfpixels pixels
 mouthImg = bwareaopen(mouthImg, numbOfpixels);
 
-%Dilate first to fill lips. Erode to remove artefacts
+%Dilate first to fill lips
 
 numbOfpixels = round(numbOfpixels/70);
 se = strel('disk', numbOfpixels);
 mouthImg = imerode(imdilate(mouthImg, se), se);
 L = imfill(mouthImg, 'holes');
-
-
