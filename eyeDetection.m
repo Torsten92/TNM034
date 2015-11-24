@@ -5,7 +5,7 @@ function [xPos, yPos, corrVal, eyeImg] = eyeDetection(subImage, subFaceMask, mou
 %eye map
 
 
-nrEyePixels = round(sizeX*sizeY*0.00083);
+nrEyePixels = round(sizeX*sizeY*0.00063);
 
 subImageYCbCr = rgb2ycbcr(subImage);
 
@@ -53,22 +53,22 @@ mouthRadius = round(sizeX*sizeY*0.00006);
 
 if(row <2)
     
-    row
-    for h = 99:-1:50
+    
+    for h = 99:-1:40
         eyeImg = dilatedEyeMap>(h/100);
 
         eyeImg = bwareaopen(eyeImg.*subFaceMask, nrEyePixels);
         [c,r] = imfindcircles(eyeImg,[10,20]);
         [row, ~] = size(c);
-        row
-        h
-        if(row > 1 )
+       
+        if(row > 3 )
             break;
         else
         end
    
     end
 end
+h
 %viscircles(c, r);
 %figure;imshow(eyeImg);
 
@@ -124,7 +124,7 @@ if(boolFlag ~= row)
             l = find(d == min(d));
             x1 = c(l,1);
             y1 = c(l,2);
-            possibleEyePoint = [x1,y1]
+            possibleEyePoint = [x1,y1];
             d(d == min(d)) = 1000000;
             [ex, ye] = size(possibleEyePoint);
             
@@ -135,9 +135,9 @@ if(boolFlag ~= row)
             eyeVector = possibleEyePoint-mouthCenter;
          
             CosTheta = dot(eyeVector,mouthRefVector)/(norm(eyeVector)*norm(mouthRefVector));
-            abs(CosTheta);
+            abs(CosTheta)
             
-            if(abs(CosTheta) < 0.5 && abs(CosTheta) > 0.15 )
+            if(abs(CosTheta) < 0.75 && abs(CosTheta) > 0.15 )
                 
                 xPos(kol) = x1;
                 yPos(kol) = y1;

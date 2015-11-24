@@ -22,7 +22,7 @@ mouthMap = mouthMap./max(mouthMap(:));
 %show mask and the "cleaned" image
 
 
-a = round(sum(size(mouthMap))*0.3);
+a = round(sum(size(mouthMap))*0.3)
 mouthImg = mouthMap > 0.35;
 mouthImg = bwareaopen(mouthImg, a);
 
