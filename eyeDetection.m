@@ -68,7 +68,7 @@ if(row <2)
    
     end
 end
-h
+
 %viscircles(c, r);
 %figure;imshow(eyeImg);
 
@@ -121,9 +121,6 @@ if(boolFlag ~= row)
                 end
             end
         end
-        
-            %check smallest distance
-
         
         eyesCenter=[mouthCenter(1) mouthCenter(2);
                     1 1];
