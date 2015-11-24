@@ -21,7 +21,6 @@ mouthMap = mouthMap./max(mouthMap(:));
 %mouthMask = mouthMask > 0.4;
 %show mask and the "cleaned" image
 
-<<<<<<< HEAD
 [r c] = size(mouthMap);
 
 
@@ -34,37 +33,30 @@ mouthImg = mouthMap > 0.35;
 
 assignin('base', 'mouthMap', mouthImg);
 
+%Remove small regions
 se = strel('disk',1);        
 mouthImg = imerode(mouthImg,se);
 
 se2 = strel('disk', 2);
 mouthImg = imdilate(mouthImg, se2);
 
+%Find connected components (regions) in binary image
 cc = bwconncomp(mouthImg); 
 stats = regionprops(cc, 'Area','Eccentricity'); 
-idx = find([stats.Area] > 100 & [stats.Eccentricity] > 0.90); 
+
+%images mouth region must be bigger than 100 pixels and it's Eccentricity
+%must be greater than 0.84 (empiriskt)
+%Eccentricity is the ratio of the distance between the foci of the ellipse
+%and its major axis lengths, scalär
+idx = find([stats.Area] > 100 & [stats.Eccentricity] > 0.84); 
+%check labelmatrix(cc) elements that are members of idx
 mouthImg = ismember(labelmatrix(cc), idx);
-assignin('base', 'stats', stats);
-assignin('base', 'BW2', mouthImg);
+assignin('base', 'labelmatrix', labelmatrix(cc));
+assignin('base', 'idx', idx);
 
-%{
-s = regionprops(mouthImg, mouthImg, {'Centroid','WeightedCentroid'});
 
-figure
-imshow(mouthImg)
-title('Weighted (red) and Unweighted (blue) Centroids');
-hold on
-numObj = numel(s);
-for k = 1 : numObj
-    plot(s(k).WeightedCentroid(1), s(k).WeightedCentroid(2), 'r*');
-    plot(s(k).Centroid(1), s(k).Centroid(2), 'bo');
-end
-hold off
-assignin('base', 's', s);
-%}
-    
-
-%erase white regions if it contains less than numbOfpixels pixels
+%erase white regions if it contains less than numbOfpixels pixels, we only
+%want one mouth region
 mouthImg = bwareaopen(mouthImg, numbOfpixels);
 
 %Dilate first to fill lips
