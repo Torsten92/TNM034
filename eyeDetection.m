@@ -90,6 +90,7 @@ d = 1:row;
 d(:) = 1000000;
 
 %check if all eyes are below mouth
+%if so the code will use default values
 for n = 1:row
     if (c(n,2) > mouthCenter(2))
         boolFlag = boolFlag+1;
@@ -97,14 +98,13 @@ for n = 1:row
 end
 
 if(boolFlag ~= row)
+    
     %if there are more than 2 eyes
-  
-    
-    
-    
     if(row>2)
         eye2eye = [1,1;
                    1,1];
+        %compare distance from eye2eye
+        %and mergethem if to close
         for n = 1:row
             for j = 1:row
                 if(n~=j)
@@ -124,7 +124,9 @@ if(boolFlag ~= row)
         
         eyesCenter=[mouthCenter(1) mouthCenter(2);
                     1 1];
-        %check distance to each eye
+      
+        %if point is below mouth
+        %calculates the distance to that point
         for n = 1:row
             eyesCenter(2,1) = c(n,1);
             eyesCenter(2,2) = c(n,2);
@@ -139,8 +141,11 @@ if(boolFlag ~= row)
         
         end
         
+        %check angle from a vector to seed away some points
+        %uses closest points from mouth as eyes
         kol = 1;
         for n = 1:row
+            
             l = find(d == min(d));
             x1 = c(l,1);
             y1 = c(l,2);
@@ -148,6 +153,7 @@ if(boolFlag ~= row)
             d(d == min(d)) = 1000000;
             [ex, ye] = size(possibleEyePoint);
             
+            %evil break of doom!
             if((ex*ye) > 3)
                 break;
             end
@@ -169,13 +175,13 @@ if(boolFlag ~= row)
             
         end
       
- 
+    %if there are only 2 eyes
     elseif row == 2
-        %if there are only 2 eyes
         xPos(1) = c(1,1);
         yPos(1) = c(1,2);
         xPos(2) = c(2,1);
         yPos(2) = c(2,2);
+   %there are 1 or less eyes, TODO.
     else
         
     end
