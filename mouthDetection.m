@@ -13,18 +13,64 @@ im2Cr = im2double(subImageYCbCr(:,:,3));
 chromaLength = size(im2Cr(:), 1);
 top = ((1/chromaLength) * sum(im2Cr(:).*im2Cr(:)));
 bot = ((1/chromaLength) * sum(im2Cr(:)./im2Cb(:)));
-n = 0.95 *( top./bot );
+n = 0.97 *( top./bot );
 
 %calculate mouthmask 
 mouthMap = (im2Cr.*im2Cr) .* ((im2Cr.*im2Cr) - n.*(im2Cr./im2Cb)).^2;
 mouthMap = mouthMap./max(mouthMap(:));
 %mouthMask = mouthMask > 0.4;
 %show mask and the "cleaned" image
- 
 
-se = strel('disk', 4);
-detectMouth = imdilate(mouthMap,se);
+[r c] = size(mouthMap);
 
 
-mouthImg = detectMouth > 0.3;
-mouthImg = bwareaopen(mouthImg, 600);
+%decide how many pixels a region must have to not be erased 
+%we decided that regions that are has less than 0.23% pixels of the image will be erased (empriskt) 
+numbOfpixels = round(r*c*0.0023);
+%if the pixel value is greater than 35% set pixel value to 1 the rest is 0
+mouthImg = mouthMap > 0.35;
+%mouthImg = imfill(mouthImg,[3 3],8)
+
+assignin('base', 'mouthMap', mouthImg);
+
+se = strel('disk',1);        
+mouthImg = imerode(mouthImg,se);
+
+se2 = strel('disk', 2);
+mouthImg = imdilate(mouthImg, se2);
+
+cc = bwconncomp(mouthImg); 
+stats = regionprops(cc, 'Area','Eccentricity'); 
+idx = find([stats.Area] > 100 & [stats.Eccentricity] > 0.90); 
+mouthImg = ismember(labelmatrix(cc), idx);
+assignin('base', 'stats', stats);
+assignin('base', 'BW2', mouthImg);
+
+%{
+s = regionprops(mouthImg, mouthImg, {'Centroid','WeightedCentroid'});
+
+figure
+imshow(mouthImg)
+title('Weighted (red) and Unweighted (blue) Centroids');
+hold on
+numObj = numel(s);
+for k = 1 : numObj
+    plot(s(k).WeightedCentroid(1), s(k).WeightedCentroid(2), 'r*');
+    plot(s(k).Centroid(1), s(k).Centroid(2), 'bo');
+end
+hold off
+assignin('base', 's', s);
+%}
+    
+
+%erase white regions if it contains less than numbOfpixels pixels
+mouthImg = bwareaopen(mouthImg, numbOfpixels);
+
+%Dilate first to fill lips. Erode to remove artefacts
+
+numbOfpixels = round(numbOfpixels/70);
+se = strel('disk', numbOfpixels);
+mouthImg = imerode(imdilate(mouthImg, se), se);
+L = imfill(mouthImg, 'holes');
+
+

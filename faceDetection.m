@@ -1,6 +1,6 @@
 %function [massa argument] = faceDetection(image)
 
-image = imread('images/DB1/db1_15.jpg');
+image = imread('images/DB1/db1_01.jpg');
 
 image = whiteBalance(image);
 
@@ -8,6 +8,9 @@ image = whiteBalance(image);
 [~, subImage, subFaceMask] = skinDetection(image);
 
 [~, mouthImg] = mouthDetection(subImage);
+
+figure;
+imshow(mouthImg)
 
 [~, eyeImg] = eyeDetection(subImage, subFaceMask);
 
