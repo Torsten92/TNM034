@@ -4,6 +4,7 @@ cbcrIm = rgb2ycbcr(image);
 
 [~, skinRegion] = generate_skinmap(image);
 
+
 Y = double(cbcrIm(:,:,1));
 Cb = double(cbcrIm(:,:,2));
 Cr = double(cbcrIm(:,:,3));
@@ -45,6 +46,8 @@ end
 %fill holes
 groupedSkinArea = imfill(skinRegion, 'holes');
 
+
+
 se = strel('disk', 3);
 se2 = strel('disk', 9);
 se3 = strel('disk', 6);
@@ -69,6 +72,7 @@ faceMask  = faceMask(min(row):max(row), min(col):max(col));
 cropImage = image(min(row):max(row), min(col):max(col),:);
 
 
+
 %find all "ones" in faceMask
 [x, y] = find(faceMask);
 
@@ -85,7 +89,9 @@ r_sq = [bt, at].^2;
 ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
 
 %expand the face to an elipse mask
-faceMask = ellipse_mask+faceMask;
+%faceMask = ellipse_mask+faceMask;
+
+faceMask = faceMask;
 
 %remove unwanted shapes in the mask
 se = strel('disk', 20);

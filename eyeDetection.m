@@ -1,7 +1,7 @@
 function [xPos, yPos, corrVal, eyeImg] = eyeDetection(cropImage, faceMask, mouthCenter, sumSize)
 
 
-[sizeX sizeY] = size(faceMask);
+
 %eye map
 
 
@@ -29,18 +29,37 @@ eyeMapL = eyeMapL/max(eyeMapL(:));
 
 %eyeMap
 eyeMap = eyeMapHq.*eyeMapL;
+
+%dilation
 se2 = strel('disk', 10);
 dilatedEyeMap = imdilate(eyeMap, se2);
 
-%find eyes as a mask
-norm2 = max(dilatedEyeMap(:));
-dilatedEyeMap = dilatedEyeMap./norm2;
+%normalize
+%norm2 = max(dilatedEyeMap(:));
+%dilatedEyeMap = dilatedEyeMap./norm2;
 
-eyeImg = dilatedEyeMap>1;
+%invert color, necessary when we subtract dilatedEyeMap with faceMask
+dilatedEyeMapInv = imcomplement(dilatedEyeMap);
 
+
+%masking, gives the complete mask
+finalEyeMap = faceMask - dilatedEyeMapInv;
+
+
+%find eyes as a mask, hur kan det ens finnas pixelvärde som e större än 1?
+eyeImg = finalEyeMap>0.8;
+
+
+assignin('base', 'eyeImg', eyeImg);
+
+%decide how many pixels a region must have to not be erased 
+%we decided that regions that are has less than 0.063% pixels of the image will be erased (empriskt) 
+[sizeX sizeY] = size(faceMask);
 nrEyePixels = round(sizeX*sizeY*0.00063);
 
-eyeImg = bwareaopen(eyeImg.*faceMask, nrEyePixels);
+%eyeImg = bwareaopen(eyeImg.*faceMask, nrEyePixels);
+
+
 
 avgSize = (13*13*9)/(sumSize);
 

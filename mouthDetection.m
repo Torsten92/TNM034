@@ -1,4 +1,4 @@
-function [corrVal, mouthImg, mouthCenter] = mouthDetection(subImage)
+function [corrVal, mouthImg, mouthCenter] = mouthDetection(subImage, faceMask)
 corrVal = 0;
 
 % mouth map
@@ -16,19 +16,29 @@ bot = ((1/chromaLength) * sum(im2Cr(:)./im2Cb(:)));
 n = 0.97 *( top./bot );
 
 %calculate mouthmask 
-mouthMap = (im2Cr.*im2Cr) .* ((im2Cr.*im2Cr) - n.*(im2Cr./im2Cb)).^2;
+mouthMap = (im2Cr.^2) .* ((im2Cr.^2) - n.*(im2Cr./im2Cb)).^2;
 mouthMap = mouthMap./max(mouthMap(:));
-%mouthMask = mouthMask > 0.4;
-%show mask and the "cleaned" image
+
+%dilation
+se2 = strel('disk', 10);
+mouthImg = imdilate(mouthMap, se2);
+
+%invert color, necessary when we subtract dilatedEyeMap with faceMask
+mouthMap = imcomplement(mouthMap);
+
+%masking, gives the compleate mouthMap
+finalMouthMap = faceMask - mouthMap;
+
+%if the pixel value is greater than 35% set pixel value to 1 the rest is 0
+mouthImg = finalMouthMap > 0.35;
+%mouthImg = imfill(mouthImg,[3 3],8)
+
 
 [r c] = size(mouthMap);
 
 %decide how many pixels a region must have to not be erased 
 %we decided that regions that are has less than 0.23% pixels of the image will be erased (empriskt) 
 numbOfpixels = round(r*c*0.0023);
-%if the pixel value is greater than 35% set pixel value to 1 the rest is 0
-mouthImg = mouthMap > 0.35;
-%mouthImg = imfill(mouthImg,[3 3],8)
 
 assignin('base', 'mouthMap', mouthImg);
 
@@ -46,7 +56,7 @@ stats = regionprops(cc, 'Area','Eccentricity');
 %images mouth region must be bigger than 100 pixels and it's Eccentricity
 %must be greater than 0.84 (empiriskt)
 %Eccentricity is the ratio of the distance between the foci of the ellipse
-%and its major axis lengths, scal�r
+%and its major axis lengths, scalar
 idx = find([stats.Area] > 100 & [stats.Eccentricity] > 0.84); 
 %check labelmatrix(cc) elements that are members of idx
 mouthImg = ismember(labelmatrix(cc), idx);
@@ -65,6 +75,7 @@ se = strel('disk', numbOfpixels);
 mouthImg = imerode(imdilate(mouthImg, se), se);
 L = imfill(mouthImg, 'holes');
 
+
 %find mouth center
 [x, y] = meshgrid(1:size(L, 2), 1:size(L, 1));
 weightedx = x .* L;
@@ -74,3 +85,5 @@ ycentre = sum(weightedy(:)) / sum(L(:));
 xcentre = round(xcentre);
 ycentre = round(ycentre);
 mouthCenter = [xcentre, ycentre];
+
+
