@@ -16,14 +16,13 @@ end
 for i = 1:N
     image{i} = whiteBalance(image{i});
 
-    [~, subImage, subFaceMask] = skinDetection(image{i});
+    [cropImage, subFaceMask] = skinDetection(image{i});
 
+    [~, mouthImg, mouthCenter] = mouthDetection(cropImage);
 
-    [~, mouthImg, mouthCenter] = mouthDetection(subImage);
+    [xPos, yPos ,~, eyeImg] = eyeDetection(cropImage, subFaceMask, mouthCenter, sumSize);
 
-    [xPos, yPos ,~, eyeImg] = eyeDetection(subImage, subFaceMask, mouthCenter, sumSize);
-
-    [~, triImg] = triangulateFace(xPos,yPos,subImage,mouthCenter);
+    [~, triImg] = triangulateFace(xPos,yPos,cropImage,mouthCenter);
 
     figure;imshow(triImg)
     %imshow(subFaceMask)

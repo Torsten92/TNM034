@@ -1,17 +1,19 @@
-function [xPos, yPos, corrVal, eyeImg] = eyeDetection(subImage, subFaceMask, mouthCenter, sumSize)
+function [xPos, yPos, corrVal, eyeImg] = eyeDetection(cropImage, faceMask, mouthCenter, sumSize)
 
 
-[sizeX sizeY] = size(subFaceMask);
+[sizeX sizeY] = size(faceMask);
 %eye map
 
 
-subImageYCbCr = rgb2ycbcr(subImage);
+subImageYCbCr = rgb2ycbcr(cropImage);
 
 im2Y = im2double(subImageYCbCr(:,:,1));
 im2Cb = im2double(subImageYCbCr(:,:,2));
 im2Cr = im2double(subImageYCbCr(:,:,3));
 
 %fallowing the equation from "face detection in color image"
+
+%eyeMapC
 Cb2 = im2Cb.*im2Cb;
 Cr2 = (1-im2Cr).^2;%*(1-im2Cr);
 CbCr = im2Cb./im2Cr;
@@ -20,14 +22,12 @@ eyeMapC = (1/3) .* (Cb2 +Cr2+CbCr);
 %histogram equalization
 eyeMapHq = histeq(eyeMapC);
 
-
 %Luminance eyeMapL
 se = strel('disk', 4);
 eyeMapL = imdilate(im2Y, se)./(imerode(im2Y,se)+1);
 eyeMapL = eyeMapL/max(eyeMapL(:));
 
-
-%full eyeMap
+%eyeMap
 eyeMap = eyeMapHq.*eyeMapL;
 se2 = strel('disk', 10);
 dilatedEyeMap = imdilate(eyeMap, se2);
@@ -40,11 +40,11 @@ eyeImg = dilatedEyeMap>1;
 
 nrEyePixels = round(sizeX*sizeY*0.00063);
 
-eyeImg = bwareaopen(eyeImg.*subFaceMask, nrEyePixels);
+eyeImg = bwareaopen(eyeImg.*faceMask, nrEyePixels);
 
 avgSize = (13*13*9)/(sumSize);
 
-[sizeX, sizeY] = size(subImage);
+[sizeX, sizeY] = size(cropImage);
 mouthRadius = round(sizeX*sizeY*0.00006);
 %subplot into 2 images
 
@@ -59,7 +59,7 @@ if(row <2)
     for h = 99:-1:40
         eyeImg = dilatedEyeMap>(h/100);
 
-        eyeImg = bwareaopen(eyeImg.*subFaceMask, nrEyePixels);
+        eyeImg = bwareaopen(eyeImg.*faceMask, nrEyePixels);
         [c,r] = imfindcircles(eyeImg,[10,20]);
         [row, ~] = size(c);
        

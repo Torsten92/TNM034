@@ -1,5 +1,4 @@
-function [corrVal, cropImage, faceMask] = skinDetection(image)
-corrVal = 0;
+function [cropImage, faceMask] = skinDetection(image)
 
 cbcrIm = rgb2ycbcr(image);
 
