@@ -70,8 +70,6 @@ faceMask  = faceMask(min(row):max(row), min(col):max(col));
 cropImage = image(min(row):max(row), min(col):max(col),:);
 
 
-[sizeX, sizeY] = size(faceMask);
-
 %find all "ones" in faceMask
 [x, y] = find(faceMask);
 
@@ -82,15 +80,15 @@ X = [x';
 [zt, at, bt, alphat] = fitellipse(X, 'linear', 'constraint', 'trace');
 ellipseC = zt;
 r_sq = [bt, at].^2;
+
+[sizeX, sizeY] = size(faceMask);
 [X, Y] = meshgrid(1:sizeY, 1:sizeX);
 ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
 
-%sphere mask
+%expand the face to an elipse mask
 faceMask = ellipse_mask+faceMask;
 
+%remove unwanted shapes in the mask
 se = strel('disk', 20);
-faceMask = imfill(faceMask, 'holes');
 faceMask = imdilate(imerode(faceMask, se), se);
 
-figure
-imshow(faceMask)
