@@ -42,7 +42,7 @@ nrEyePixels = round(sizeX*sizeY*0.00063);
 
 eyeImg = bwareaopen(eyeImg.*subFaceMask, nrEyePixels);
 
-avgSize = (13*13)/(sumSize);
+avgSize = (13*13*9)/(sumSize);
 
 [sizeX, sizeY] = size(subImage);
 mouthRadius = round(sizeX*sizeY*0.00006);

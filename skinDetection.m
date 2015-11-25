@@ -57,6 +57,13 @@ faceMask = imfill(faceMask, 'holes');
 boundaries = bwboundaries(faceMask);
 assignin('base', 'boundaries', boundaries);
 
+%decide how many pixels a region must have to not be erased 
+[r, c] = size(faceMask);
+numbOfpixels = round(r*c*0.033);
+%erase white regions if it contains less than numbOfpixels pixels, we only
+%want one face region
+faceMask = bwareaopen(faceMask, numbOfpixels);
+
 %crop mask and image
 [row, col] = find(faceMask);
 faceMask  = faceMask(min(row):max(row), min(col):max(col));
@@ -67,7 +74,6 @@ cropImage = image(min(row):max(row), min(col):max(col),:);
 
 %find all "ones" in faceMask
 [x, y] = find(faceMask);
-
 
 X = [x';
     y'];
@@ -81,8 +87,10 @@ ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) 
 
 %sphere mask
 faceMask = ellipse_mask+faceMask;
-faceMask=  faceMask > 0.1;
 
 se = strel('disk', 20);
 faceMask = imfill(faceMask, 'holes');
 faceMask = imdilate(imerode(faceMask, se), se);
+
+figure
+imshow(faceMask)
