@@ -1,10 +1,10 @@
 clear all
 
 sumSize = 0;
-N = 9;
+N = 4;
 image = cell(N,1);
 for i = 1:N
-    image{i} = imread(sprintf('images/DB2/bl_0%d.jpg', i));
+    image{i} = imread(sprintf('images/DB0/db0_%d.jpg', i));
     %image = imread(sprintf('images/DB0/db0_%d.jpg',2));
     
     [r c ~] = size(image{i});
@@ -21,6 +21,7 @@ for i = 1:N
     [~, mouthImg, mouthCenter] = mouthDetection(cropImage, faceMask);
 
     [xPos, yPos ,~, eyeImg] = eyeDetection(cropImage, faceMask, mouthCenter, sumSize);
+    
 
     [~, triImg] = triangulateFace(xPos,yPos,cropImage,mouthCenter);
 

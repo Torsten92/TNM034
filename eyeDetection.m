@@ -47,8 +47,11 @@ finalEyeMap = faceMask - dilatedEyeMapInv;
 
 
 
-%find eyes as a mask, hur kan det ens finnas pixelvärde som e större än 1?
-eyeImg = finalEyeMap>0.8;
+%find eyes as a mask?
+eyeImg = finalEyeMap>0.9;
+
+figure
+imshow(eyeImg)
 
 
 assignin('base', 'eyeImg', eyeImg);
@@ -62,7 +65,7 @@ nrEyePixels = round(sizeX*sizeY*0.00063);
 
 
 
-avgSize = (13*13*9)/(sumSize);
+avgSize = (13*13)/(sumSize);
 
 [sizeX, sizeY] = size(cropImage);
 mouthRadius = round(sizeX*sizeY*0.00006);

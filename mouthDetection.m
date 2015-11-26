@@ -1,8 +1,8 @@
-function [corrVal, mouthImg, mouthCenter] = mouthDetection(subImage, faceMask)
+function [corrVal, mouthImg, mouthCenter] = mouthDetection(cropImage, faceMask)
 corrVal = 0;
 
 % mouth map
-subImageYCbCr = rgb2ycbcr(subImage);
+subImageYCbCr = rgb2ycbcr(cropImage);
 
 im2Y = im2double(subImageYCbCr(:,:,1));
 im2Cb = im2double(subImageYCbCr(:,:,2));
