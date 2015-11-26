@@ -64,7 +64,6 @@ nrEyePixels = round(sizeX*sizeY*0.00063);
 %eyeImg = bwareaopen(eyeImg.*faceMask, nrEyePixels);
 
 
-
 avgSize = (13*13)/(sumSize);
 
 [sizeX, sizeY] = size(cropImage);

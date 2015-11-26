@@ -108,7 +108,7 @@ faceMaskPlusElips(faceMaskPlusElips == -1) = 0;
 
 %using the elipsMasks size to crop the final faceMask (rezise it to same size)
 [row, col] = find(faceMaskPlusElips);
-faceMask  = faceMask(min(row):max(row), min(col):max(col));
+%faceMask  = faceMask(min(row):max(row), min(col):max(col));
 
 %applies faceMaskPlusElips on a black image that have same size as cropImage
 [r c ~] = size(cropImage);
@@ -116,8 +116,8 @@ sizeCropImg = zeros(r,c);
 
 bigFaceMaskPlusElips=sizeCropImg+faceMaskPlusElips;
 
-[row, col] = find(bigFaceMaskPlusElips);
-cropImage = cropImage(min(row):max(row), min(col):max(col),:);
+%[row, col] = find(bigFaceMaskPlusElips);
+%cropImage = cropImage(min(row):max(row), min(col):max(col),:);
 
 
 
