@@ -1,4 +1,4 @@
-clear all
+clear all;
 
 sumSize = 0;
 N = 1;
@@ -11,13 +11,10 @@ for i = 1:N
     sumSize = sumSize + r * c;
 end
 
-
-
 for i = 1:N
     image{i} = whiteBalance(image{i});
 
     [~, subImage, subFaceMask] = skinDetection(image{i});
-
 
     [~, mouthImg, mouthCenter] = mouthDetection(subImage);
 
@@ -28,5 +25,3 @@ for i = 1:N
     figure;imshow(triImg)
     %imshow(subFaceMask)
 end
-
-
