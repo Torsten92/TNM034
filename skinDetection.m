@@ -56,9 +56,6 @@ se3 = strel('disk', 6);
 faceMask = imerode(imdilate(imerode(groupedSkinArea, se), se2), se3);
 faceMask = imfill(faceMask, 'holes');
 
-boundaries = bwboundaries(faceMask);
-assignin('base', 'boundaries', boundaries);
-
 %decide how many pixels a region must have to not be erased 
 [r, c] = size(faceMask);
 numbOfpixels = round(r*c*0.033);
@@ -66,11 +63,10 @@ numbOfpixels = round(r*c*0.033);
 %want one face region
 faceMask = bwareaopen(faceMask, numbOfpixels);
 
-%crop mask and image
+%crop mask, Find indices and values of nonzero elements
 [row, col] = find(faceMask);
 faceMask  = faceMask(min(row):max(row), min(col):max(col));
 cropImage = image(min(row):max(row), min(col):max(col),:);
-
 
 
 %find all "ones" in faceMask
@@ -88,12 +84,44 @@ r_sq = [bt, at].^2;
 [X, Y] = meshgrid(1:sizeY, 1:sizeX);
 ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
 
+%makes the elips bigger, important because somtimes it cuts eyes and mouths
+se = strel('disk', 10);
+ellipse_mask = imdilate(ellipse_mask,se);
+
+
 %expand the face to an elipse mask
 %faceMask = ellipse_mask+faceMask;
 
-faceMask = faceMask;
+%invert color
+ellipse_mask = imcomplement(ellipse_mask);
+
+%masking, gives the complete mask
+faceMaskPlusElips =  faceMask - ellipse_mask;
+
+%the subtraction above sets some pixel values to -1, we must change these to
+%0
+faceMaskPlusElips(faceMaskPlusElips == -1) = 0;
+
+
+%figure
+%imshow(faceMaskPlusElips)
+
+%using the elipsMasks size to crop the final faceMask (rezise it to same size)
+[row, col] = find(faceMaskPlusElips);
+faceMask  = faceMask(min(row):max(row), min(col):max(col));
+
+%applies faceMaskPlusElips on a black image that have same size as cropImage
+[r c ~] = size(cropImage);
+sizeCropImg = zeros(r,c);
+
+bigFaceMaskPlusElips=sizeCropImg+faceMaskPlusElips;
+
+[row, col] = find(bigFaceMaskPlusElips);
+cropImage = cropImage(min(row):max(row), min(col):max(col),:);
+
+
 
 %remove unwanted shapes in the mask
-se = strel('disk', 20);
-faceMask = imdilate(imerode(faceMask, se), se);
+%se = strel('disk', 20);
+%faceMask = imdilate(imerode(faceMask, se), se);
 

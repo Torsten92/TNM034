@@ -29,6 +29,7 @@ mouthMap = imcomplement(mouthMap);
 %masking, gives the compleate mouthMap
 finalMouthMap = faceMask - mouthMap;
 
+
 %if the pixel value is greater than 35% set pixel value to 1 the rest is 0
 mouthImg = finalMouthMap > 0.35;
 %mouthImg = imfill(mouthImg,[3 3],8)

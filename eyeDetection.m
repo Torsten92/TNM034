@@ -46,6 +46,7 @@ dilatedEyeMapInv = imcomplement(dilatedEyeMap);
 finalEyeMap = faceMask - dilatedEyeMapInv;
 
 
+
 %find eyes as a mask, hur kan det ens finnas pixelvärde som e större än 1?
 eyeImg = finalEyeMap>0.8;
 
