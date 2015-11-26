@@ -4,6 +4,8 @@ cbcrIm = rgb2ycbcr(image);
 
 [~, skinRegion] = generate_skinmap(image);
 
+figure
+imshow(skinRegion)
 
 Y = double(cbcrIm(:,:,1));
 Cb = double(cbcrIm(:,:,2));
@@ -92,23 +94,31 @@ ellipse_mask = imdilate(ellipse_mask,se);
 %expand the face to an elipse mask
 %faceMask = ellipse_mask+faceMask;
 
+%faceMask=  faceMask > 0.1;
+
+%noze reduction
+se = strel('disk', 20);
+faceMask = imfill(faceMask, 'holes');
+faceMask = imdilate(imerode(faceMask, se), se);
+
 %invert color
-ellipse_mask = imcomplement(ellipse_mask);
+%ellipse_mask = imcomplement(ellipse_mask);
 
 %masking, gives the complete mask
-faceMaskPlusElips =  faceMask - ellipse_mask;
+faceMaskPlusElips =  faceMask  ;
 
-%the subtraction above sets some pixel values to -1, we must change these to
-%0
-faceMaskPlusElips(faceMaskPlusElips == -1) = 0;
+figure
+imshow(faceMaskPlusElips)
 
+%the subtraction above sets some pixel values to >1, we must change these to
+%1
+faceMaskPlusElips(faceMaskPlusElips > 1) = 1;
 
-%figure
-%imshow(faceMaskPlusElips)
 
 %using the elipsMasks size to crop the final faceMask (rezise it to same size)
 [row, col] = find(faceMaskPlusElips);
-%faceMask  = faceMask(min(row):max(row), min(col):max(col));
+faceMask  = faceMaskPlusElips(min(row):max(row), min(col):max(col));
+
 
 %applies faceMaskPlusElips on a black image that have same size as cropImage
 [r c ~] = size(cropImage);
@@ -116,8 +126,8 @@ sizeCropImg = zeros(r,c);
 
 bigFaceMaskPlusElips=sizeCropImg+faceMaskPlusElips;
 
-%[row, col] = find(bigFaceMaskPlusElips);
-%cropImage = cropImage(min(row):max(row), min(col):max(col),:);
+[row, col] = find(bigFaceMaskPlusElips);
+cropImage = cropImage(min(row):max(row), min(col):max(col),:);
 
 
 

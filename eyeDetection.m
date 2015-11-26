@@ -1,10 +1,6 @@
 function [xPos, yPos, corrVal, eyeImg] = eyeDetection(cropImage, faceMask, mouthCenter, sumSize)
 
-
-
 %eye map
-
-
 subImageYCbCr = rgb2ycbcr(cropImage);
 
 im2Y = im2double(subImageYCbCr(:,:,1));
@@ -43,15 +39,15 @@ dilatedEyeMapInv = imcomplement(dilatedEyeMap);
 
 
 %masking, gives the complete mask
-finalEyeMap = faceMask - dilatedEyeMapInv;
+
+
+finalEyeMap = faceMask .*dilatedEyeMap;
 
 
 
 %find eyes as a mask?
-eyeImg = finalEyeMap>0.9;
+eyeImg = finalEyeMap>0.99;
 
-figure
-imshow(eyeImg)
 
 
 assignin('base', 'eyeImg', eyeImg);
@@ -71,15 +67,17 @@ mouthRadius = round(sizeX*sizeY*0.00006);
 %subplot into 2 images
 
 
-
 [c,r] = imfindcircles(eyeImg,[10,20]);
 [row, ~] = size(c);
+finalEyeMap(mouthCenter(2):end, : )=0;
+
+
 
 if(row <2)
     
     
     for h = 99:-1:40
-        eyeImg = dilatedEyeMap>(h/100);
+        eyeImg = finalEyeMap>(h/100);
 
         eyeImg = bwareaopen(eyeImg.*faceMask, nrEyePixels);
         [c,r] = imfindcircles(eyeImg,[10,20]);
@@ -95,9 +93,7 @@ end
 
 %remove everything below mouth
 
-eyeImg(mouthCenter(2):end, : )=0;
 eyeImg = bwareaopen(eyeImg.*faceMask, nrEyePixels);
-
 %viscircles(c, r);
 %figure;imshow(eyeImg);
 
@@ -215,6 +211,8 @@ if(boolFlag ~= row)
     end
 end
 
+
+
 eyeImg = zeros(size(eyeImg));
 r = 18;
 eyeImg(yPos(1),xPos(1)) = 1;
@@ -222,3 +220,4 @@ eyeImg(yPos(2),xPos(2)) = 1;
 eyeImg = imdilate(eyeImg,strel('disk', r,0) );
 
 eyeImg = eyeImg>0.1;
+

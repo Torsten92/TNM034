@@ -24,15 +24,23 @@ se2 = strel('disk', 10);
 mouthImg = imdilate(mouthMap, se2);
 
 %invert color, necessary when we subtract dilatedEyeMap with faceMask
-mouthMap = imcomplement(mouthMap);
+%mouthMap = imcomplement(mouthMap);
 
 %masking, gives the compleate mouthMap
-finalMouthMap = faceMask - mouthMap;
+finalMouthMap = faceMask.* mouthMap;
 
+figure
+imshow(mouthImg)
 
 %if the pixel value is greater than 35% set pixel value to 1 the rest is 0
-mouthImg = finalMouthMap > 0.35;
+mouthImg = finalMouthMap > 0.20;
 %mouthImg = imfill(mouthImg,[3 3],8)
+%assignin('base', 'stats', stats);
+
+
+
+
+
 
 
 [r c] = size(mouthMap);
@@ -50,9 +58,13 @@ mouthImg = imerode(mouthImg,se);
 se2 = strel('disk', 2);
 mouthImg = imdilate(mouthImg, se2);
 
+
+
 %Find connected components (regions) in binary image
 cc = bwconncomp(mouthImg); 
 stats = regionprops(cc, 'Area','Eccentricity'); 
+
+
 
 %images mouth region must be bigger than 100 pixels and it's Eccentricity
 %must be greater than 0.84 (empiriskt)
@@ -63,21 +75,32 @@ idx = find([stats.Area] > 100 & [stats.Eccentricity] > 0.84);
 mouthImg = ismember(labelmatrix(cc), idx);
 assignin('base', 'labelmatrix', labelmatrix(cc));
 assignin('base', 'idx', idx);
+assignin('base', 'stats', stats);
+
 
 
 %erase white regions if it contains less than numbOfpixels pixels, we only
 %want one mouth region
-mouthImg = bwareaopen(mouthImg, numbOfpixels);
+%mouthImg = bwareaopen(mouthImg, numbOfpixels);
+
+%set the over half of the img to black
+[sizeX sizeY] = size(mouthImg);
+mouthImg(1:round(sizeY/2),:) = 0;
+
+
 
 %Dilate first to fill lips
 
 numbOfpixels = round(numbOfpixels/70);
+
 se = strel('disk', numbOfpixels);
 mouthImg = imerode(imdilate(mouthImg, se), se);
 L = imfill(mouthImg, 'holes');
 
 
 %find mouth center
+xcentre = 1;
+ycentre = 1;
 [x, y] = meshgrid(1:size(L, 2), 1:size(L, 1));
 weightedx = x .* L;
 weightedy = y .* L;
