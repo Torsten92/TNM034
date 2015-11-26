@@ -11,8 +11,6 @@ for i = 1:N
     sumSize = sumSize + r * c;
 end
 
-
-
 for i = 1:N
     image{i} = whiteBalance(image{i});
 
@@ -22,11 +20,12 @@ for i = 1:N
 
     [xPos, yPos ,~, eyeImg] = eyeDetection(cropImage, faceMask, mouthCenter, sumSize);
     
-
     [~, triImg] = triangulateFace(xPos,yPos,cropImage,mouthCenter);
 
-    figure;imshow(triImg)
-    %imshow(subFaceMask)
+    %corrVal = compareToDB(subImage, subFaceMask, mouthImg, eyeImg, triImg);
+    figure;
+    imshow(triImg)
 end
+
 
 
