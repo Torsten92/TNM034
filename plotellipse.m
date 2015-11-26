@@ -88,4 +88,5 @@ h = plot(hAx, X(1,:), X(2,:), linespec);
 % Return the handle if asked for
 if nargout == 1
     varargout = {h};
+
 end
