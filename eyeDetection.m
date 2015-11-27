@@ -1,17 +1,15 @@
-function [xPos, yPos, corrVal, eyeImg] = eyeDetection(subImage, subFaceMask, mouthCenter, sumSize)
+function [xPos, yPos, corrVal, eyeImg] = eyeDetection(cropImage, faceMask, mouthCenter, sumSize)
 
-
-[sizeX sizeY] = size(subFaceMask);
 %eye map
-
-
-subImageYCbCr = rgb2ycbcr(subImage);
+subImageYCbCr = rgb2ycbcr(cropImage);
 
 im2Y = im2double(subImageYCbCr(:,:,1));
 im2Cb = im2double(subImageYCbCr(:,:,2));
 im2Cr = im2double(subImageYCbCr(:,:,3));
 
 %fallowing the equation from "face detection in color image"
+
+%eyeMapC
 Cb2 = im2Cb.*im2Cb;
 Cr2 = (1-im2Cr).^2;%*(1-im2Cr);
 CbCr = im2Cb./im2Cr;
@@ -20,57 +18,107 @@ eyeMapC = (1/3) .* (Cb2 +Cr2+CbCr);
 %histogram equalization
 eyeMapHq = histeq(eyeMapC);
 
-
 %Luminance eyeMapL
 se = strel('disk', 4);
 eyeMapL = imdilate(im2Y, se)./(imerode(im2Y,se)+1);
 eyeMapL = eyeMapL/max(eyeMapL(:));
 
-
-%full eyeMap
+%eyeMap
 eyeMap = eyeMapHq.*eyeMapL;
-se2 = strel('disk', 10);
+
+%dilation
+se2 = strel('disk', 4);
 dilatedEyeMap = imdilate(eyeMap, se2);
 
-%find eyes as a mask
+
+
+%normalize
 norm2 = max(dilatedEyeMap(:));
 dilatedEyeMap = dilatedEyeMap./norm2;
 
-eyeImg = dilatedEyeMap>1;
+%invert color, necessary when we subtract dilatedEyeMap with faceMask
+%dilatedEyeMapInv = imcomplement(dilatedEyeMap);
 
+
+%masking, gives the complete mask
+
+
+finalEyeMap = faceMask .*dilatedEyeMap;
+
+
+
+%find eyes as a mask?
+eyeImg = finalEyeMap>0.65;
+
+%set downer half to black
+eyeImg((mouthCenter(2)-20):end, : )=0;
+
+%set upper half to black
+[r c] = size(eyeImg);
+eyeImg(1:round(c.*0.30), : )=0;
+
+eyeImg = imfill(eyeImg,'holes');
+
+se = strel('disk', 4);
+eyeImg = imdilate(eyeImg, se);
+
+%remove very small regions
+numbOfpixels = round(r*c*0.0015);
+eyeImg = bwareaopen(eyeImg, numbOfpixels);
+
+%finde center off mass
+s  = regionprops(eyeImg,'centroid');
+centroids = cat(1, s.Centroid);
+
+
+imshow(eyeImg)
+hold on
+plot(centroids(:,1), centroids(:,2), 'b*')
+hold off
+[sizeCx sizeYc] = size(centroids);
+for l = 1:sizeCx
+    
+   % distan = pdist([centroids( l,1) centroids( l,2); centroids( l,1) c, end] , 'euklidian'  );
+ %   sideLength = atan(5*(pi/180))*distan;
+    
+end
+
+assignin('base', 'centroids', centroids);
+
+%mouthImg = bwareaopen(eyeImg, numbOfpixels);
+
+
+
+
+assignin('base', 'eyeImg', eyeImg);
+
+%decide how many pixels a region must have to not be erased 
+%we decided that regions that are has less than 0.063% pixels of the image will be erased (empriskt) 
+[sizeX sizeY] = size(faceMask);
 nrEyePixels = round(sizeX*sizeY*0.00063);
 
-eyeImg = bwareaopen(eyeImg.*subFaceMask, nrEyePixels);
+%eyeImg = bwareaopen(eyeImg.*faceMask, nrEyePixels);
+
 
 avgSize = (13*13)/(sumSize);
 
-[sizeX, sizeY] = size(subImage);
+[sizeX, sizeY] = size(cropImage);
 mouthRadius = round(sizeX*sizeY*0.00006);
 %subplot into 2 images
-
 
 
 [c,r] = imfindcircles(eyeImg,[10,20]);
 [row, ~] = size(c);
 
-if(row <2)
-    
-    
-    for h = 99:-1:40
-        eyeImg = dilatedEyeMap>(h/100);
 
-        eyeImg = bwareaopen(eyeImg.*subFaceMask, nrEyePixels);
-        [c,r] = imfindcircles(eyeImg,[10,20]);
-        [row, ~] = size(c);
-       
-        if(row > 3 )
-            break;
-        else
-        end
-   
-    end
-end
 
+
+
+
+
+%remove everything below mouth
+
+%eyeImg = bwareaopen(eyeImg.*faceMask, nrEyePixels);
 %viscircles(c, r);
 %figure;imshow(eyeImg);
 
@@ -127,15 +175,13 @@ if(boolFlag ~= row)
         eyesCenter=[mouthCenter(1) mouthCenter(2);
                     1 1];
       
-        %if point is below mouth
         %calculates the distance to that point
         for n = 1:row
             eyesCenter(2,1) = c(n,1);
             eyesCenter(2,2) = c(n,2);
             lengthToPoint = pdist(eyesCenter,'minkowski');
         
-            %if eye are below mouth set as a high index
-            if(lengthToPoint > mouthRadius && c(n,2) < mouthCenter(2))
+            if(lengthToPoint > mouthRadius)
                d(n) = lengthToPoint;
             else
                d(n) = 1000000;
@@ -172,6 +218,7 @@ if(boolFlag ~= row)
                 kol = kol+1;
              
             else
+                
            
             end  
             
@@ -188,3 +235,14 @@ if(boolFlag ~= row)
         
     end
 end
+
+
+
+eyeImg = zeros(size(eyeImg));
+r = 18;
+eyeImg(yPos(1),xPos(1)) = 1;
+eyeImg(yPos(2),xPos(2)) = 1;
+eyeImg = imdilate(eyeImg,strel('disk', r,0) );
+
+eyeImg = eyeImg>0.1;
+
