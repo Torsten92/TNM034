@@ -31,11 +31,11 @@ se2 = strel('disk', 10);
 dilatedEyeMap = imdilate(eyeMap, se2);
 
 %normalize
-%norm2 = max(dilatedEyeMap(:));
-%dilatedEyeMap = dilatedEyeMap./norm2;
+norm2 = max(dilatedEyeMap(:));
+dilatedEyeMap = dilatedEyeMap./norm2;
 
 %invert color, necessary when we subtract dilatedEyeMap with faceMask
-dilatedEyeMapInv = imcomplement(dilatedEyeMap);
+%dilatedEyeMapInv = imcomplement(dilatedEyeMap);
 
 
 %masking, gives the complete mask
@@ -47,7 +47,6 @@ finalEyeMap = faceMask .*dilatedEyeMap;
 
 %find eyes as a mask?
 eyeImg = finalEyeMap>0.99;
-
 
 
 assignin('base', 'eyeImg', eyeImg);
@@ -69,17 +68,19 @@ mouthRadius = round(sizeX*sizeY*0.00006);
 
 [c,r] = imfindcircles(eyeImg,[10,20]);
 [row, ~] = size(c);
-finalEyeMap(mouthCenter(2):end, : )=0;
+
+
+
 
 
 
 if(row <2)
     
-    
     for h = 99:-1:40
         eyeImg = finalEyeMap>(h/100);
+        eyeImg(mouthCenter(2):end, : )=0;
 
-        eyeImg = bwareaopen(eyeImg.*faceMask, nrEyePixels);
+        eyeImg = bwareaopen(eyeImg, nrEyePixels);
         [c,r] = imfindcircles(eyeImg,[10,20]);
         [row, ~] = size(c);
        
@@ -90,6 +91,9 @@ if(row <2)
    
     end
 end
+
+%set downer half to black
+
 
 %remove everything below mouth
 

@@ -4,9 +4,6 @@ cbcrIm = rgb2ycbcr(image);
 
 [~, skinRegion] = generate_skinmap(image);
 
-figure
-imshow(skinRegion)
-
 Y = double(cbcrIm(:,:,1));
 Cb = double(cbcrIm(:,:,2));
 Cr = double(cbcrIm(:,:,3));
@@ -105,10 +102,8 @@ faceMask = imdilate(imerode(faceMask, se), se);
 %ellipse_mask = imcomplement(ellipse_mask);
 
 %masking, gives the complete mask
-faceMaskPlusElips =  faceMask  ;
+faceMaskPlusElips = ellipse_mask + faceMask;
 
-figure
-imshow(faceMaskPlusElips)
 
 %the subtraction above sets some pixel values to >1, we must change these to
 %1
