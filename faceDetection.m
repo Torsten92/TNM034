@@ -1,7 +1,7 @@
 clear all
 
 sumSize = 0;
-N = 4;
+N =4
 image = cell(N,1);
 for i = 1:N
     image{i} = imread(sprintf('images/DB0/db0_%d.jpg', i));

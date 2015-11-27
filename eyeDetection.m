@@ -27,8 +27,10 @@ eyeMapL = eyeMapL/max(eyeMapL(:));
 eyeMap = eyeMapHq.*eyeMapL;
 
 %dilation
-se2 = strel('disk', 10);
+se2 = strel('disk', 4);
 dilatedEyeMap = imdilate(eyeMap, se2);
+
+
 
 %normalize
 norm2 = max(dilatedEyeMap(:));
@@ -46,7 +48,46 @@ finalEyeMap = faceMask .*dilatedEyeMap;
 
 
 %find eyes as a mask?
-eyeImg = finalEyeMap>0.99;
+eyeImg = finalEyeMap>0.65;
+
+%set downer half to black
+eyeImg((mouthCenter(2)-20):end, : )=0;
+
+%set upper half to black
+[r c] = size(eyeImg);
+eyeImg(1:round(c.*0.30), : )=0;
+
+eyeImg = imfill(eyeImg,'holes');
+
+se = strel('disk', 4);
+eyeImg = imdilate(eyeImg, se);
+
+%remove very small regions
+numbOfpixels = round(r*c*0.0015);
+eyeImg = bwareaopen(eyeImg, numbOfpixels);
+
+%finde center off mass
+s  = regionprops(eyeImg,'centroid');
+centroids = cat(1, s.Centroid);
+
+
+imshow(eyeImg)
+hold on
+plot(centroids(:,1), centroids(:,2), 'b*')
+hold off
+[sizeCx sizeYc] = size(centroids);
+for l = 1:sizeCx
+    
+   % distan = pdist([centroids( l,1) centroids( l,2); centroids( l,1) c, end] , 'euklidian'  );
+ %   sideLength = atan(5*(pi/180))*distan;
+    
+end
+
+assignin('base', 'centroids', centroids);
+
+%mouthImg = bwareaopen(eyeImg, numbOfpixels);
+
+
 
 
 assignin('base', 'eyeImg', eyeImg);
@@ -74,30 +115,10 @@ mouthRadius = round(sizeX*sizeY*0.00006);
 
 
 
-if(row <2)
-    
-    for h = 99:-1:40
-        eyeImg = finalEyeMap>(h/100);
-        eyeImg(mouthCenter(2):end, : )=0;
-
-        eyeImg = bwareaopen(eyeImg, nrEyePixels);
-        [c,r] = imfindcircles(eyeImg,[10,20]);
-        [row, ~] = size(c);
-       
-        if(row > 3 )
-            break;
-        else
-        end
-   
-    end
-end
-
-%set downer half to black
-
 
 %remove everything below mouth
 
-eyeImg = bwareaopen(eyeImg.*faceMask, nrEyePixels);
+%eyeImg = bwareaopen(eyeImg.*faceMask, nrEyePixels);
 %viscircles(c, r);
 %figure;imshow(eyeImg);
 

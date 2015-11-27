@@ -36,7 +36,7 @@ mouthImg = imdilate(finalMouthMap, se2);
 
 %set the over half of the img to black
 [sizeX sizeY] = size(mouthImg);
-mouthImg(1:round(6*sizeX/10),:) = 0;
+mouthImg(1:round(sizeX.*0.6),:) = 0;
 
 
 
@@ -64,7 +64,7 @@ mouthImg = imdilate(mouthImg, se2);
 
 
 
-
+%{
 %Find connected components (regions) in binary image
 cc = bwconncomp(mouthImg); 
 stats = regionprops(cc, 'Area','Eccentricity'); 
@@ -75,7 +75,7 @@ stats = regionprops(cc, 'Area','Eccentricity');
 %must be greater than 0.84 (empiriskt)
 %Eccentricity is the ratio of the distance between the foci of the ellipse
 %and its major axis lengths, scalar
-%{
+
 idx = find([stats.Area] > 100 & [stats.Eccentricity] > 0.84); 
 %check labelmatrix(cc) elements that are members of idx
 mouthImg = ismember(labelmatrix(cc), idx);
