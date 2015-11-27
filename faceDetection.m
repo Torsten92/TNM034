@@ -1,4 +1,4 @@
-clear all
+clear all;
 
 sumSize = 0;
 N =4
@@ -18,15 +18,12 @@ for i = 1:N
 
     [~, mouthImg, mouthCenter] = mouthDetection(cropImage, faceMask);
 
-    
     [xPos, yPos ,~, eyeImg] = eyeDetection(cropImage, faceMask, mouthCenter, sumSize);
 
     [~, triImg] = triangulateFace(xPos,yPos,cropImage,mouthCenter);
-
-    %corrVal = compareToDB(subImage, subFaceMask, mouthImg, eyeImg, triImg);
+    
     figure;
     imshow(triImg)
 end
-
 
 
