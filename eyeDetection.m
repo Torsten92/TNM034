@@ -1,4 +1,4 @@
-function [xPos, yPos, corrVal, eyeImg] = eyeDetection(subImage, subFaceMask, mouthCenter)
+function [xPos, yPos, corrVal, eyeImg] = eyeDetection(subImage, subFaceMask, mouthCenter, sumSize)
 
 
 [sizeX sizeY] = size(subFaceMask);
@@ -69,6 +69,11 @@ if(row <2)
     end
 end
 
+%remove everything below mouth
+
+eyeImg(mouthCenter(2):end, : )=0;
+eyeImg = bwareaopen(eyeImg.*subFaceMask, nrEyePixels);
+
 %viscircles(c, r);
 %figure;imshow(eyeImg);
 
@@ -125,15 +130,13 @@ if(boolFlag ~= row)
         eyesCenter=[mouthCenter(1) mouthCenter(2);
                     1 1];
       
-        %if point is below mouth
         %calculates the distance to that point
         for n = 1:row
             eyesCenter(2,1) = c(n,1);
             eyesCenter(2,2) = c(n,2);
             lengthToPoint = pdist(eyesCenter,'minkowski');
         
-            %if eye are below mouth set as a high index
-            if(lengthToPoint > mouthRadius && c(n,2) < mouthCenter(2))
+            if(lengthToPoint > mouthRadius)
                d(n) = lengthToPoint;
             else
                d(n) = 1000000;
@@ -170,6 +173,7 @@ if(boolFlag ~= row)
                 kol = kol+1;
              
             else
+                
            
             end  
             
@@ -186,3 +190,20 @@ if(boolFlag ~= row)
         
     end
 end
+
+
+
+eyeImg = zeros(size(eyeImg));
+r = 18;
+eyeImg(yPos(1),xPos(1)) = 1;
+eyeImg(yPos(2),xPos(2)) = 1;
+eyeImg = imdilate(eyeImg,strel('disk', r,0) );
+
+eyeImg = eyeImg>0.1;
+
+
+
+
+
+
+
