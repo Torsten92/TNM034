@@ -1,4 +1,4 @@
-function [xPos, yPos, corrVal, eyeImg] = eyeDetection(cropImage, faceMask, mouthCenter, sumSize)
+function [xPos, yPos, corrVal, eyeImg] = eyeDetection(subImage, subFaceMask, mouthCenter, sumSize)
 
 %eye map
 subImageYCbCr = rgb2ycbcr(cropImage);
@@ -83,42 +83,11 @@ for l = 1:sizeCx
     
 end
 
-assignin('base', 'centroids', centroids);
-
-%mouthImg = bwareaopen(eyeImg, numbOfpixels);
-
-
-
-
-assignin('base', 'eyeImg', eyeImg);
-
-%decide how many pixels a region must have to not be erased 
-%we decided that regions that are has less than 0.063% pixels of the image will be erased (empriskt) 
-[sizeX sizeY] = size(faceMask);
-nrEyePixels = round(sizeX*sizeY*0.00063);
-
-%eyeImg = bwareaopen(eyeImg.*faceMask, nrEyePixels);
-
-
-avgSize = (13*13)/(sumSize);
-
-[sizeX, sizeY] = size(cropImage);
-mouthRadius = round(sizeX*sizeY*0.00006);
-%subplot into 2 images
-
-
-[c,r] = imfindcircles(eyeImg,[10,20]);
-[row, ~] = size(c);
-
-
-
-
-
-
-
 %remove everything below mouth
 
-%eyeImg = bwareaopen(eyeImg.*faceMask, nrEyePixels);
+eyeImg(mouthCenter(2):end, : )=0;
+eyeImg = bwareaopen(eyeImg.*subFaceMask, nrEyePixels);
+
 %viscircles(c, r);
 %figure;imshow(eyeImg);
 
@@ -245,4 +214,10 @@ eyeImg(yPos(2),xPos(2)) = 1;
 eyeImg = imdilate(eyeImg,strel('disk', r,0) );
 
 eyeImg = eyeImg>0.1;
+
+
+
+
+
+
 

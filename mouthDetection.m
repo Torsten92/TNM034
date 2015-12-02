@@ -22,6 +22,7 @@ mouthMap = mouthMap./max(mouthMap(:));
 %masking, gives the compleate mouthMap
 finalMouthMap = faceMask.* mouthMap;
 
+
 %dilation
 se2 = strel('disk', 8);
 mouthImg = imdilate(finalMouthMap, se2);
