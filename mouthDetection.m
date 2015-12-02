@@ -22,6 +22,7 @@ mouthMap = mouthMap./max(mouthMap(:));
 %masking, gives the compleate mouthMap
 finalMouthMap = faceMask.* mouthMap;
 
+
 %dilation
 se2 = strel('disk', 8);
 mouthImg = imdilate(finalMouthMap, se2);
@@ -36,14 +37,18 @@ mouthImg = imdilate(finalMouthMap, se2);
 
 %set the over half of the img to black
 [sizeX sizeY] = size(mouthImg);
-mouthImg(1:round(sizeX.*0.6),:) = 0;
+
+mouthImg(1:round(sizeX.*0.56),:) = 0;
+
 
 
 
 %if the pixel value is greater than 38% set pixel value to 1 the rest is 0
-mouthImg = mouthImg > 0.38;
+
+mouthImg = mouthImg > 0.28;
 %mouthImg = imfill(mouthImg,[3 3],8)
 %assignin('base', 'stats', stats);
+
 
 
 
@@ -51,7 +56,9 @@ mouthImg = mouthImg > 0.38;
 
 %decide how many pixels a region must have to not be erased 
 %we decided that regions that are has less than 0.23% pixels of the image will be erased (empriskt) 
-numbOfpixels = round(r*c*0.0028);
+
+numbOfpixels = round(r*c*0.0010);
+
 
 assignin('base', 'mouthMap', mouthImg);
 
@@ -64,7 +71,9 @@ mouthImg = imdilate(mouthImg, se2);
 
 
 
-%{
+
+
+
 %Find connected components (regions) in binary image
 cc = bwconncomp(mouthImg); 
 stats = regionprops(cc, 'Area','Eccentricity'); 
@@ -76,21 +85,31 @@ stats = regionprops(cc, 'Area','Eccentricity');
 %Eccentricity is the ratio of the distance between the foci of the ellipse
 %and its major axis lengths, scalar
 
-idx = find([stats.Area] > 100 & [stats.Eccentricity] > 0.84); 
+
+idx = find([stats.Area] > 100 & [stats.Eccentricity] < 0.84); 
+
 %check labelmatrix(cc) elements that are members of idx
-mouthImg = ismember(labelmatrix(cc), idx);
+mouthImgIdx = ismember(labelmatrix(cc), idx);
 assignin('base', 'labelmatrix', labelmatrix(cc));
 assignin('base', 'idx', idx);
 assignin('base', 'stats', stats);
 
-%}
 
 
 
-
-%erase white regions if it contains less than numbOfpixels pixels, we only
+%check if all elements is nonzero, if true go over to next reduce method
+%Method: erase white regions if it contains less than numbOfpixels pixels, we only
 %want one mouth region
-mouthImg = bwareaopen(mouthImg, numbOfpixels);
+if all(mouthImgIdx)
+    mouthImg = bwareaopen(mouthImgIdx, numbOfpixels);
+else
+    %else, use the other method
+    mouthImg = bwareaopen(mouthImg, numbOfpixels);
+end
+
+figure
+imshow(mouthImg)
+
 
 
 %Dilate first to fill lips
@@ -113,5 +132,4 @@ ycentre = sum(weightedy(:)) / sum(L(:));
 xcentre = round(xcentre);
 ycentre = round(ycentre);
 mouthCenter = [xcentre, ycentre];
-
 

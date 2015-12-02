@@ -1,8 +1,10 @@
-function [cropImage, faceMask] = skinDetection(image)
+function [cropImage, faceMask] = skinDetection(image,sumSize)
+
 
 cbcrIm = rgb2ycbcr(image);
 
 [~, skinRegion] = generate_skinmap(image);
+
 
 Y = double(cbcrIm(:,:,1));
 Cb = double(cbcrIm(:,:,2));
@@ -62,32 +64,6 @@ numbOfpixels = round(r*c*0.033);
 %want one face region
 faceMask = bwareaopen(faceMask, numbOfpixels);
 
-%crop mask, Find indices and values of nonzero elements
-[row, col] = find(faceMask);
-faceMask  = faceMask(min(row):max(row), min(col):max(col));
-cropImage = image(min(row):max(row), min(col):max(col),:);
-
-
-%find all "ones" in faceMask
-[x, y] = find(faceMask);
-
-X = [x';
-    y'];
-
-%ellipse mask
-[zt, at, bt, alphat] = fitellipse(X, 'linear', 'constraint', 'trace');
-ellipseC = zt;
-r_sq = [bt, at].^2;
-
-[sizeX, sizeY] = size(faceMask);
-[X, Y] = meshgrid(1:sizeY, 1:sizeX);
-ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
-
-%makes the elips bigger, important because somtimes it cuts eyes and mouths
-se = strel('disk', 10);
-ellipse_mask = imdilate(ellipse_mask,se);
-
-
 %expand the face to an elipse mask
 %faceMask = ellipse_mask+faceMask;
 
@@ -101,32 +77,105 @@ faceMask = imdilate(imerode(faceMask, se), se);
 %invert color
 %ellipse_mask = imcomplement(ellipse_mask);
 
+
+[row, col] = find(faceMask);
+    cropImage  = image(min(row):max(row), min(col):max(col), :);
+    faceMask  = faceMask(min(row):max(row), min(col):max(col));
+    %cropImage = imcrop(image,[centroidsOffaceMask(n).BoundingBox]);
+
+
+
+
+
 %masking, gives the complete mask
-faceMaskPlusElips = ellipse_mask + faceMask;
+
+centroidsOffaceMask  = regionprops(skinRegion,'BoundingBox','Area');
 
 
-%the subtraction above sets some pixel values to >1, we must change these to
-%1
-faceMaskPlusElips(faceMaskPlusElips > 1) = 1;
+MaxArea = numbOfpixels; %// Select largest area you want to keep.
+centroidsOffaceMask = centroidsOffaceMask([centroidsOffaceMask.Area] > MaxArea); %// Detect cells larger than some value.
 
 
-%using the elipsMasks size to crop the final faceMask (rezise it to same size)
-[row, col] = find(faceMaskPlusElips);
-faceMask  = faceMaskPlusElips(min(row):max(row), min(col):max(col));
+L = length(centroidsOffaceMask)
 
+for n = 1:L
+    %ta ut alla omr�den i masken
+    
 
-%applies faceMaskPlusElips on a black image that have same size as cropImage
-[r c ~] = size(cropImage);
-sizeCropImg = zeros(r,c);
+    %cropImage = imcrop(image,[centroidsOffaceMask(n).BoundingBox]);
 
-bigFaceMaskPlusElips=sizeCropImg+faceMaskPlusElips;
+    %figure;imshow(cropImage);
+    %generera om skinmasken p� omr�det
 
-[row, col] = find(bigFaceMaskPlusElips);
-cropImage = cropImage(min(row):max(row), min(col):max(col),:);
+    [~, skinRegion] = generate_skinmap(cropImage);
+    
+    
+    
+    %fill holes
+    groupedSkinArea = imfill(skinRegion, 'holes');
 
+    se = strel('disk', 3);
+    se2 = strel('disk', 9);
+    se3 = strel('disk', 6);
 
+    %remove noise
+    faceMask = imerode(imdilate(imerode(groupedSkinArea, se), se2), se3);
+    faceMask = imfill(faceMask, 'holes');
+    %decide how many pixels a region must have to not be erased 
+    [r, c] = size(faceMask);
+    numbOfpixels = round(r*c*0.043);
+    %erase white regions if it contains less than numbOfpixels pixels, we only
+    %want one face region
+    faceMask = bwareaopen(faceMask, numbOfpixels);
+   
+    %find all "ones" in faceMask
+    [x, y] = find(faceMask);
 
-%remove unwanted shapes in the mask
-%se = strel('disk', 20);
-%faceMask = imdilate(imerode(faceMask, se), se);
+    X = [x';
+        y'];
+
+    %ellipse mask
+    [zt, at, bt, ~] = fitellipse(X, 'linear', 'constraint', 'trace');
+    ellipseC = zt;
+    r_sq = [bt, at].^2;
+
+    [sizeX, sizeY] = size(faceMask);
+    [X, Y] = meshgrid(1:sizeY, 1:sizeX);
+    ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
+
+    %makes the elips bigger, important because somtimes it cuts eyes and mouths
+    se = strel('disk', 20);
+    ellipse_mask = imdilate(ellipse_mask,se);
+    
+     
+    faceMaskPlusElips = faceMask+ellipse_mask;
+    faceMaskPlusElips(faceMaskPlusElips > 0.1);
+    faceMask = faceMaskPlusElips > 0.1;
+    
+    assignin('base', 'faceMask', faceMask);
+    assignin('base', 'cropImage', cropImage);
+    cropImage = im2double(cropImage);
+    img(:,:,1) = cropImage(:,:,1).*faceMask;
+    img(:,:,2) = cropImage(:,:,2).*faceMask;
+    img(:,:,3) = cropImage(:,:,3).*faceMask;
+    figure;imshow(img);
+
+    [~, mouthImg, mouthCenter] = mouthDetection(cropImage, faceMask);
+    
+    if ( isnan(mouthCenter(1))==0 && isnan(mouthCenter(2)) == 0  )
+
+        [xPos, yPos, corrVal, eyeImg] = eyeDetection(img, faceMask, mouthCenter,sumSize);
+    
+
+        [~, triImg] = triangulateFace(xPos,yPos,cropImage,mouthCenter);
+         
+        figure;imshow(triImg);
+    else
+        disp('ingen mun hittades')
+        %om det inte finns en mun SKA allt explodera 
+        
+    end
+    
+    
+end
 

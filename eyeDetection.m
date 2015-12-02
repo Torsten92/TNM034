@@ -45,8 +45,6 @@ dilatedEyeMap = dilatedEyeMap./norm2;
 
 finalEyeMap = faceMask .*dilatedEyeMap;
 
-
-
 %find eyes as a mask?
 eyeImg = finalEyeMap>0.65;
 
@@ -245,4 +243,3 @@ eyeImg(yPos(2),xPos(2)) = 1;
 eyeImg = imdilate(eyeImg,strel('disk', r,0) );
 
 eyeImg = eyeImg>0.1;
-
