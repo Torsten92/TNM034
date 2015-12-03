@@ -1,4 +1,4 @@
-function [cropImage, faceMask] = skinDetection(image,sumSize)
+function [cropSubImage, faceMask] = skinDetection(image,sumSize)
 
 cbcrIm = rgb2ycbcr(image);
 
@@ -52,7 +52,7 @@ se2 = strel('disk', 9);
 se3 = strel('disk', 6);
 
 %remove noise
-faceMask = imerode(imdilate(imerode(groupedSkinArea, se), se2), se3);
+faceMask = (imdilate(groupedSkinArea, se2));
 faceMask = imfill(faceMask, 'holes');
 
 %decide how many pixels a region must have to not be erased 
@@ -62,65 +62,36 @@ numbOfpixels = round(r*c*0.033);
 %want one face region
 faceMask = bwareaopen(faceMask, numbOfpixels);
 
-%crop mask, Find indices and values of nonzero elements
-[row, col] = find(faceMask);
-faceMask  = faceMask(min(row):max(row), min(col):max(col));
-
-
-
-
-
-%find all "ones" in faceMask
-[x, y] = find(faceMask);
-
-
-
-
-%expand the face to an elipse mask
-%faceMask = ellipse_mask+faceMask;
-
-%faceMask=  faceMask > 0.1;
-
-%noze reduction
+%noise reduction
 se = strel('disk', 20);
 faceMask = imfill(faceMask, 'holes');
 faceMask = imdilate(imerode(faceMask, se), se);
-
-%invert color
-%ellipse_mask = imcomplement(ellipse_mask);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 %masking, gives the complete mask
 
+
+%find all areas of white 
 centroidsOffaceMask  = regionprops(faceMask,'BoundingBox','Area');
 
 
-MaxArea = numbOfpixels; %// Select largest area you want to keep.
-centroidsOffaceMask = centroidsOffaceMask([centroidsOffaceMask.Area] > MaxArea); %// Detect cells larger than some value.
+% Select largest area you want to keep.
+MaxArea = numbOfpixels; 
+% Detect cells larger than some value.
+centroidsOffaceMask = centroidsOffaceMask([centroidsOffaceMask.Area] > MaxArea); 
 
 
 L = length(centroidsOffaceMask);
 
+%[row, col] = find(faceMask);
+   % cropSubImage  = image(min(row):max(row), min(col):max(col), :);
+
+
 for n = 1:L
-    %ta ut alla områden i masken
-    cropImage = imcrop(image,[centroidsOffaceMask(n).BoundingBox]);
+    
+    %croppar ut alla områden i bilden till sub-bilder
+    cropSubImage = imcrop(image,[centroidsOffaceMask(n).BoundingBox]);
 
     %generera om skinmasken på området
-    [~, skinRegion] = generate_skinmap(cropImage);
-    
+    [~, skinRegion] = generate_skinmap(cropSubImage);
     
     
     %fill holes
@@ -147,6 +118,7 @@ for n = 1:L
         y'];
 
     %ellipse mask
+ 
     [zt, at, bt, ~] = fitellipse(X, 'linear', 'constraint', 'trace');
     ellipseC = zt;
     r_sq = [bt, at].^2;
@@ -160,28 +132,27 @@ for n = 1:L
     ellipse_mask = imdilate(ellipse_mask,se);
     
      
-    faceMaskPlusElips = faceMask+ellipse_mask;
+    faceMaskPlusElips = ellipse_mask;
     faceMaskPlusElips(faceMaskPlusElips > 0.1);
     faceMask = faceMaskPlusElips > 0.1;
     
     assignin('base', 'faceMask', faceMask);
-    assignin('base', 'cropImage', cropImage);
-    cropImage = im2double(cropImage);
-    img(:,:,1) = cropImage(:,:,1).*faceMask;
-    img(:,:,2) = cropImage(:,:,2).*faceMask;
-    img(:,:,3) = cropImage(:,:,3).*faceMask;
-    figure;imshow(img);
+    assignin('base', 'cropSubImage', cropSubImage);
+    cropSubImage = im2double(cropSubImage);
+    img = zeros(size(cropSubImage));
+    img(:,:,1) = cropSubImage(:,:,1).*faceMask;
+    img(:,:,2) = cropSubImage(:,:,2).*faceMask;
+    img(:,:,3) = cropSubImage(:,:,3).*faceMask;
 
-    [~, mouthImg, mouthCenter] = mouthDetection(cropImage, faceMask);
+    [~, mouthImg, mouthCenter] = mouthDetection(cropSubImage, faceMask);
     
     if ( isnan(mouthCenter(1))==0 && isnan(mouthCenter(2)) == 0  )
 
         [xPos, yPos, corrVal, eyeImg] = eyeDetection(img, faceMask, mouthCenter,sumSize);
     
 
-         [~, triImg] = triangulateFace(xPos,yPos,cropImage,mouthCenter);
+         [~, triImg] = triangulateFace(xPos,yPos,cropSubImage,mouthCenter);
          
-         figure;imshow(triImg);
     else
         %om det inte finns en mun SKA allt explodera 
         
@@ -189,8 +160,3 @@ for n = 1:L
     
     
 end
-
-%remove unwanted shapes in the mask
-%se = strel('disk', 20);
-%faceMask = imdilate(imerode(faceMask, se), se);
-

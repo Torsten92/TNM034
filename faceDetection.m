@@ -3,8 +3,9 @@ close all;
 clc;
 
 sumSize = 0;
-N = 1;
-n= 1;
+n= 2;
+
+N = 2;
 image = cell(N,1);
 for i = n:N
     image{i} = imread(sprintf('images/DB1/db1_0%d.jpg', i));
@@ -12,14 +13,14 @@ for i = n:N
     
     [r c ~] = size(image{i});
     sumSize = sumSize + r * c;
+    
 end
 
 for i = n:N
-    image{i} = whiteBalance(image{i});
+   image{i} = whiteBalance(image{i});
 
-    [~, ~] = skinDetection(image{i},sumSize);
-
-    
+   [~, ~] = skinDetection(image{i},sumSize);
+      
 end
 
 
