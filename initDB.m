@@ -16,8 +16,10 @@ for i = 1:16
     
     %resize so that every image is same size. Convert to grayscale for correct
     %calculations
-    [~, subImageTemp, ~] = skinDetection(image);
-    subImageTemp = imresize(rgb2gray(im2double(whiteBalance(subImageTemp))), [w, h]);
+    image = whiteBalance(image);
+    [subImageTemp, faceMask] = skinDetection(image);
+
+    subImageTemp = imresize(rgb2gray(im2double(subImageTemp)), [w, h]);
     
     images(:, i) = subImageTemp(:);
 end

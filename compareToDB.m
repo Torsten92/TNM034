@@ -3,7 +3,7 @@ function [result] = compareToDB(subImage)
 %Set image dimensions
 w = 64; h = 64;
 
-subImage = imresize(rgb2gray(im2double(whiteBalance(subImage))), [w, h]);
+subImage = imresize(rgb2gray(im2double(subImage)), [w, h]);
 
 load('EigenfacesDB.mat');
 
