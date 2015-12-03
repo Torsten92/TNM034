@@ -10,5 +10,13 @@ shapeInserter = vision.ShapeInserter('Shape','Polygons','BorderColor','Custom', 
 
 triImg = step(shapeInserter, subImage, polygon); 
 
+eye1 = [xPos(1) yPos(1)];
+eye2 = [xPos(2) yPos(2)];
 
+normEyeVector = (eye2-eye1) / norm(eye2-eye1);
+
+angle = acos(dot([1 0], normEyeVector));
+angle = 180 * angle / pi;
+
+triImg = imrotate(triImg, -angle, 'bilinear');
 
