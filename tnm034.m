@@ -1,18 +1,20 @@
 function [ result ] = tnm034( im )
-%
-% im: Image of unknown face, RGB-image in uint8 format in the
-% range [0,255]
-%
-% id: The identity number (integer) of the identified person,
-% i.e. ‘1’, ‘2’,…,‘16’ for the persons
 
-% I'm done. Fix it all, boys!
+% result is in the range 0-1. Tröskla result and return 1 if low enough.
+% 
+% 
 
-    processedImage = detectFace(im);
+result = 1;
+[skinCorr, mouthCorr, eyeCorr, triCorr, noseCorr] = faceDetect(image);
 
-    result = false;
-    if processedImage ~= zeros(size(processedimage))
-        result = compareToDB(processedImage);
-    end
+for i = 1:antalbiler
+    [DBskinCorr, DBmouthCorr, DBeyeCorr, DBtriCorr, DBnoseCorr] = faceDetect(DBimage(i));
+    temp = abs(DBskinCorr-skinCorr) + abs(DBmouthCorr-mouthCorr) + ...
+        if temp < result
+            result = temp;
+        end
+end
+
+return result < 0.1;
 
 end
