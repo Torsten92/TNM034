@@ -104,8 +104,5 @@ for n = 1:L
         [xPos, yPos, ~] = eyeDetection(img, faceMask, mouthCenter);
         [angle, ~] = triangulateFace(xPos,yPos,img,mouthCenter);
         img = imrotate(img, angle, 'bilinear');
-    else
-        disp('too smal face area')
-        n = n + 1;
     end
 end
