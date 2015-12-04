@@ -1,4 +1,4 @@
-function [result] = compareToDB(subImage)
+function [result, who] = compareToDB(subImage)
 
 %Set image dimensions
 w = 64; h = 64;
@@ -15,3 +15,5 @@ for i = 1:16
 end
 
 result = min(eucDist);
+
+who = max(eucDist == result);

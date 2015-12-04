@@ -25,7 +25,7 @@ finalMouthMap = faceMask.* mouthMap;
 %dilation
 se2 = strel('disk', 8);
 mouthImg = imdilate(finalMouthMap, se2);
-figure;imshow(finalMouthMap)
+
 %set the over half of the img to black
 [sizeX sizeY] = size(mouthImg);
 [r c] = size(mouthMap);
@@ -38,7 +38,7 @@ assignin('base', 'mouthMap', mouthImg);
 
 for mouthIntensity = 40:-1:10
     
-    mouthIntensity = mouthIntensity/100
+    mouthIntensity = mouthIntensity/100;
     mouthImg(1:round(sizeX.*0.6),:) = 0;
 
     %if the pixel value is greater than 38% set pixel value to 1 the rest is 0
@@ -60,8 +60,6 @@ for mouthIntensity = 40:-1:10
     %want one mouth region
 
 end
-
-figure;imshow(mouthImg);
 
 %Dilate first to fill lips
 mouthImg = bwareaopen(mouthImg, numbOfpixels);

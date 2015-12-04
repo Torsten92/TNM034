@@ -1,10 +1,10 @@
-function [result] = faceDetection(image)
+function [finalResult] = faceDetection(image)
 
 image = whiteBalance(image);
 
 [subImage, faceMask] = skinDetection(image);
 
-result = compareToDB(subImage);
+[result, who] = compareToDB(subImage);
 
 
-finalResult = result < 10000;
+finalResult = result < 100;

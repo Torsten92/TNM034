@@ -1,7 +1,7 @@
-function [leftEye, rightEye, eyeImg] = eyeDetection(subImage, subFaceMask, mouthCenter)
+function [leftEye, rightEye, eyeImg] = eyeDetection(subImage, faceMask, mouthCenter)
 leftEye=0;rightEye = 0;
 
-[sizeX, sizeY] = size(subFaceMask);
+[sizeX, sizeY] = size(faceMask);
 %eye map
 
 %Minimum size of the eye is 0.0063 percent
@@ -36,7 +36,7 @@ se2 = strel('disk', 10);
 dilatedEyeMap = imdilate(eyeMap, se2);
 
 %find eyes as a mask
-dilatedEyeMap = (dilatedEyeMap./max(dilatedEyeMap(:))).*subFaceMask;
+dilatedEyeMap = (dilatedEyeMap./max(dilatedEyeMap(:))).*faceMask;
 
 
 %Declare final eye image
@@ -50,15 +50,15 @@ for intensityThreshold = 99:-1:40
     %and one cone.
     innerRadius = (mouthCenter(2)*0.3)^2;
     outerRadius = (mouthCenter(2)*0.7)^2;
-    [sizeX, sizeY] = size(subFaceMask);
+    [sizeX, sizeY] = size(faceMask);
     [X, Y] = meshgrid(1:sizeY, 1:sizeX);
     tempMask1 = ( (innerRadius * (Y - mouthCenter(2)) .^ 2 + innerRadius * (X - mouthCenter(1)) .^ 2) <= innerRadius^2 );
     tempMask2 = ( (outerRadius * (Y - mouthCenter(2)) .^ 2 + outerRadius * (X - mouthCenter(1)) .^ 2) <= outerRadius^2 );
 
     %The cone.
-    c = [1 size(subFaceMask,2)/2 size(subFaceMask,2)];
-    r = [size(subFaceMask,1)/10 size(subFaceMask,1) size(subFaceMask,1)/10];
-    tempMask3 = roipoly(subFaceMask,c,r);
+    c = [1 size(faceMask,2)/2 size(faceMask,2)];
+    r = [size(faceMask,1)/10 size(faceMask,1) size(faceMask,1)/10];
+    tempMask3 = roipoly(faceMask,c,r);
 
     %Final mask that represent the area where eyes may be.
     tempMask = (tempMask2-tempMask1).*tempMask3;

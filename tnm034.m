@@ -1,10 +1,10 @@
-function [result] = tnm034(image)
+function [finalResult, who] = tnm034(image)
 
 image = whiteBalance(image);
 
-[subImage, ~] = skinDetection(image);
+[subImage, faceMask] = skinDetection(image);
 
-result = compareToDB(subImage);
+[result, who] = compareToDB(subImage);
 
-
-result = result < 10000;
+who = sprintf('this is person number %d', who);
+finalResult = result < 100;
