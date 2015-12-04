@@ -22,32 +22,12 @@ mouthMap = mouthMap./max(mouthMap(:));
 %masking, gives the compleate mouthMap
 finalMouthMap = faceMask.* mouthMap;
 
-
 %dilation
 se2 = strel('disk', 8);
 mouthImg = imdilate(finalMouthMap, se2);
-
-
-%invert color, necessary when we subtract dilatedEyeMap with faceMask
-%mouthMap = imcomplement(mouthMap);
-
-
-
-
-
+figure;imshow(finalMouthMap)
 %set the over half of the img to black
 [sizeX sizeY] = size(mouthImg);
-mouthImg(1:round(sizeX.*0.6),:) = 0;
-
-
-
-%if the pixel value is greater than 38% set pixel value to 1 the rest is 0
-mouthImg = mouthImg > 0.38;
-%mouthImg = imfill(mouthImg,[3 3],8)
-%assignin('base', 'stats', stats);
-
-
-
 [r c] = size(mouthMap);
 
 %decide how many pixels a region must have to not be erased 
@@ -56,45 +36,35 @@ numbOfpixels = round(r*c*0.0028);
 
 assignin('base', 'mouthMap', mouthImg);
 
-%Remove small regions
-se = strel('disk',1);        
-mouthImg = imerode(mouthImg,se);
+for mouthIntensity = 40:-1:10
+    
+    mouthIntensity = mouthIntensity/100
+    mouthImg(1:round(sizeX.*0.6),:) = 0;
 
-se2 = strel('disk', 2);
-mouthImg = imdilate(mouthImg, se2);
-
-
-
-%{
-%Find connected components (regions) in binary image
-cc = bwconncomp(mouthImg); 
-stats = regionprops(cc, 'Area','Eccentricity'); 
+    %if the pixel value is greater than 38% set pixel value to 1 the rest is 0
+    mouthImg = mouthImg > mouthIntensity;
 
 
 
-%images mouth region must be bigger than 100 pixels and it's Eccentricity
-%must be greater than 0.84 (empiriskt)
-%Eccentricity is the ratio of the distance between the foci of the ellipse
-%and its major axis lengths, scalar
+    %Remove small regions
+    se = strel('disk',1);        
+    mouthImg = imerode(mouthImg,se);
 
-idx = find([stats.Area] > 100 & [stats.Eccentricity] > 0.84); 
-%check labelmatrix(cc) elements that are members of idx
-mouthImg = ismember(labelmatrix(cc), idx);
-assignin('base', 'labelmatrix', labelmatrix(cc));
-assignin('base', 'idx', idx);
-assignin('base', 'stats', stats);
+    se2 = strel('disk', 2);
+    mouthImg = imdilate(mouthImg, se2);
+    if(nnz(mouthImg) > numbOfpixels)
+        break;
+    end
+    
+    %erase white regions if it contains less than numbOfpixels pixels, we only
+    %want one mouth region
 
-%}
+end
 
-
-
-
-%erase white regions if it contains less than numbOfpixels pixels, we only
-%want one mouth region
-mouthImg = bwareaopen(mouthImg, numbOfpixels);
-
+figure;imshow(mouthImg);
 
 %Dilate first to fill lips
+mouthImg = bwareaopen(mouthImg, numbOfpixels);
 
 numbOfpixels = round(numbOfpixels/70);
 
@@ -114,5 +84,4 @@ ycentre = sum(weightedy(:)) / sum(L(:));
 xcentre = round(xcentre);
 ycentre = round(ycentre);
 mouthCenter = [xcentre, ycentre];
-
 
