@@ -132,9 +132,6 @@ for n = 1:L
 
             %Normalize illumination
             img = 0.4 + (log(img)+0.4) ./ 3;
-%            img(:,:,1) = histeq(img(:,:,1));
-%            img(:,:,2) = histeq(img(:,:,2));
-%            img(:,:,3) = histeq(img(:,:,3));
         end 
     end
 end

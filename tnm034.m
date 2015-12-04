@@ -6,5 +6,10 @@ image = whiteBalance(image);
 
 [result, who] = compareToDB(subImage);
 
-who = sprintf('this is person number %d', who);
 finalResult = result < 100;
+
+if finalResult == 1
+    who = sprintf('This is person number %d', who);
+else
+    who = 'This person does not belong here';
+end
