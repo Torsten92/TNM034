@@ -1,6 +1,4 @@
-%function [result] = faceDetection(image)
-
-image = imread('images/db1_03.jpg');
+function [result] = faceDetection(image)
 
 image = whiteBalance(image);
 

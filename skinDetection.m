@@ -97,17 +97,16 @@ for n = 1:L
     img(:,:,1) = cropSubImage(:,:,1).*faceMask;
     img(:,:,2) = cropSubImage(:,:,2).*faceMask;
     img(:,:,3) = cropSubImage(:,:,3).*faceMask;
-    img2 = cropSubImage;
+    img = cropSubImage;
     %Mouth detection
     [~, ~, mouthCenter] = mouthDetection(cropSubImage, faceMask);
     
     %Detect eyes and rotate image to align them to the horizontal plane
-    [xPos, yPos, ~] = eyeDetection(img, faceMask, mouthCenter);
-    [angle, ~] = triangulateFace(xPos,yPos,img,mouthCenter);
+    [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);
+    [angle, ~] = triangulateFace(leftEye,rightEye,img,mouthCenter);
     
     %rotate all
     img = imrotate(img, angle, 'bilinear');
-    img2 = imrotate(img2, angle, 'bilinear');
     faceMask = imrotate(faceMask, angle, 'bilinear');
     
     %redo all calculations for the rotated image
@@ -115,27 +114,26 @@ for n = 1:L
     [~, ~, mouthCenter] = mouthDetection(img, faceMask);
     
     %Detect eyes and rotate image to align them to the horizontal plane
-    [xPos, yPos, ~] = eyeDetection(img, faceMask, mouthCenter);    
+    [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);    
     
-    [xSize, ySize] = size(faceMask);
-    xSize = round(0.1*xSize);
-    ySize = round(0.1*ySize);
+    
+    xSize = round(0.2*abs(rightEye(1,1)-leftEye(1,1)));
+    ySize = round(0.2*abs(rightEye(1,2)-mouthCenter(1,2)));
 
     %calculate new mask
-    c = [xPos(1,1)-xSize yPos(1,1)+xSize yPos(1,1)+xSize xPos(1,1)-xSize];
-    r = [xPos(1,2)-ySize yPos(1,2)-ySize mouthCenter(1,2)+ySize mouthCenter(1,2)+ySize];
+    c = [leftEye(1,1)-xSize rightEye(1,1)+xSize rightEye(1,1)+xSize leftEye(1,1)-xSize];
+    r = [leftEye(1,2)-ySize rightEye(1,2)-ySize mouthCenter(1,2)+ySize mouthCenter(1,2)+ySize];
     faceMask2 = roipoly(faceMask,c,r);
     
     %recalculate and crop image with new mask
-    img2(:,:,1) = img2(:,:,1).*faceMask2;
-    img2(:,:,2) = img2(:,:,2).*faceMask2;
-    img2(:,:,3) = img2(:,:,3).*faceMask2;
+    img(:,:,1) = img(:,:,1).*faceMask2;
+    img(:,:,2) = img(:,:,2).*faceMask2;
+    img(:,:,3) = img(:,:,3).*faceMask2;
     [row, col] = find(faceMask2);
-    faceMask2  = faceMask2(min(row):max(row), min(col):max(col));
-    img2 = img2(min(row):max(row), min(col):max(col),:);
+    %faceMask2  = faceMask2(min(row):max(row), min(col):max(col));
+    img = img(min(row):max(row), min(col):max(col),:);
     
-    %set values to resendvariables
-    img = img2;
-    faceMask = faceMask2;
-    
+    %Normalize illumination
+    img = 0.4 + (log(img)+1) ./ 3;
+
 end

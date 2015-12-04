@@ -68,10 +68,27 @@ for intensityThreshold = 99:-1:40
 
     eyeImg = eyeImg.*tempMask;
     eyeImg = bwareaopen(eyeImg, nrEyePixels);
-    [centerCoord, ~] = imfindcircles(eyeImg,[10,20]);
-    
+    [centerCoord, r] = imfindcircles(eyeImg,[10,20]);
     %If we found two eyes or more
     if(size(centerCoord, 1) >= 2)
+        if(size(centerCoord, 1) > 2)           
+            %loop through all pointsand measure thier distance. Merge points if lower
+            %than 2*radius
+            for i = 1:size(centerCoord, 1)-1
+                for j = i+1:size(centerCoord, 1)
+                    eye2eye=[centerCoord(i,:);
+                             centerCoord(j,:)];
+                    distance = pdist(eye2eye,'minkowski');
+                    if(distance < 2*r)
+                        centerCoord(i,1) = round( (centerCoord(i,1)+centerCoord(j,1))/2);
+                        centerCoord(i,2) = round( (centerCoord(i,2)+centerCoord(j,2))/2);
+                        
+                        %remove unwanted points
+                        centerCoord(j,:) = [sizeX, 0];
+                    end
+                end
+            end
+        end
         centerCoord = sortrows(centerCoord);
         leftEye = round(centerCoord(1,:));
         rightEye = round(centerCoord(2,:));
