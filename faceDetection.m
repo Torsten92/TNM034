@@ -1,6 +1,6 @@
-function [result] = faceDetection(image)
+%function [result] = faceDetection(image)
 
-%image = imread('images/db1_01_rotated.jpg');
+image = imread('images/db1_03.jpg');
 
 image = whiteBalance(image);
 

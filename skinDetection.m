@@ -97,12 +97,45 @@ for n = 1:L
     img(:,:,1) = cropSubImage(:,:,1).*faceMask;
     img(:,:,2) = cropSubImage(:,:,2).*faceMask;
     img(:,:,3) = cropSubImage(:,:,3).*faceMask;
-    
+    img2 = cropSubImage;
     %Mouth detection
     [~, ~, mouthCenter] = mouthDetection(cropSubImage, faceMask);
     
     %Detect eyes and rotate image to align them to the horizontal plane
     [xPos, yPos, ~] = eyeDetection(img, faceMask, mouthCenter);
     [angle, ~] = triangulateFace(xPos,yPos,img,mouthCenter);
+    
+    %rotate all
     img = imrotate(img, angle, 'bilinear');
+    img2 = imrotate(img2, angle, 'bilinear');
+    faceMask = imrotate(faceMask, angle, 'bilinear');
+    
+    %redo all calculations for the rotated image
+    %Mouth detection
+    [~, ~, mouthCenter] = mouthDetection(img, faceMask);
+    
+    %Detect eyes and rotate image to align them to the horizontal plane
+    [xPos, yPos, ~] = eyeDetection(img, faceMask, mouthCenter);    
+    
+    [xSize, ySize] = size(faceMask);
+    xSize = round(0.1*xSize);
+    ySize = round(0.1*ySize);
+
+    %calculate new mask
+    c = [xPos(1,1)-xSize yPos(1,1)+xSize yPos(1,1)+xSize xPos(1,1)-xSize];
+    r = [xPos(1,2)-ySize yPos(1,2)-ySize mouthCenter(1,2)+ySize mouthCenter(1,2)+ySize];
+    faceMask2 = roipoly(faceMask,c,r);
+    
+    %recalculate and crop image with new mask
+    img2(:,:,1) = img2(:,:,1).*faceMask2;
+    img2(:,:,2) = img2(:,:,2).*faceMask2;
+    img2(:,:,3) = img2(:,:,3).*faceMask2;
+    [row, col] = find(faceMask2);
+    faceMask2  = faceMask2(min(row):max(row), min(col):max(col));
+    img2 = img2(min(row):max(row), min(col):max(col),:);
+    
+    %set values to resendvariables
+    img = img2;
+    faceMask = faceMask2;
+    
 end
