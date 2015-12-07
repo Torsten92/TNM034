@@ -1,4 +1,5 @@
 function [leftEye, rightEye, eyeImg] = eyeDetection(subImage, faceMask, mouthCenter)
+
 leftEye=0;rightEye = 0;
 
 [sizeX, sizeY] = size(faceMask);
@@ -44,6 +45,7 @@ eyeImg = 0;
 
 %Loop though eyeImg intensity value and stop when we find two eyes.
 for intensityThreshold = 99:-1:40
+    
     eyeImg = dilatedEyeMap>(intensityThreshold/100);
     
     %Filter away eye outside of a certain area defined by two circles
@@ -65,33 +67,64 @@ for intensityThreshold = 99:-1:40
     
     %remove white pixels below mouth
     tempMask((mouthCenter(2)-20):end, : )=0;
-
+    figure;imshow(eyeImg)
     eyeImg = eyeImg.*tempMask;
     eyeImg = bwareaopen(eyeImg, nrEyePixels);
     [centerCoord, r] = imfindcircles(eyeImg,[10,20]);
     %If we found two eyes or more
-    if(size(centerCoord, 1) >= 2)
-        if(size(centerCoord, 1) > 2)           
-            %loop through all pointsand measure thier distance. Merge points if lower
-            %than 2*radius
-            for i = 1:size(centerCoord, 1)-1
-                for j = i+1:size(centerCoord, 1)
-                    eye2eye=[centerCoord(i,:);
-                             centerCoord(j,:)];
-                    distance = pdist(eye2eye,'minkowski');
-                    if(distance < 2*r)
-                        centerCoord(i,1) = round( (centerCoord(i,1)+centerCoord(j,1))/2);
-                        centerCoord(i,2) = round( (centerCoord(i,2)+centerCoord(j,2))/2);
-                        
-                        %remove unwanted points
-                        centerCoord(j,:) = [sizeX, 0];
-                    end
-                end
-            end
-        end
+    figure;imshow(eyeImg)
+    if(size(centerCoord, 1) == 2)
         centerCoord = sortrows(centerCoord);
         leftEye = round(centerCoord(1,:));
         rightEye = round(centerCoord(2,:));
+        size(centerCoord, 1)
+        break;           
+       
+    elseif (size(centerCoord, 1) > 2)
+        %loop through all pointsand measure thier distance. Merge points if lower
+        %than 2*radius
+        for i = 1:size(centerCoord, 1)-1
+            for j = i+1:size(centerCoord, 1)
+                eye2eye=[centerCoord(i,:);
+                         centerCoord(j,:)];
+                distance = pdist(eye2eye,'minkowski');
+                if(distance < 2*r)
+                    centerCoord(i,1) = round( (centerCoord(i,1)+centerCoord(j,1))/2);
+                    centerCoord(i,2) = round( (centerCoord(i,2)+centerCoord(j,2))/2);
+
+                    %remove unwanted points
+                    centerCoord(j,:) = [sizeX, 0];
+                end
+            end
+        end
+        %take just 1 eye on each side of the face
+        leftCount = 1;
+        rightCount = 1;
+        for i = 1:size(centerCoord,1)
+            %find all distances to centerline
+            if  centerCoord(i,1) > mouthCenter(1)
+                eye2line = [ centerCoord(i,:) ;
+                             mouthCenter(1), centerCoord(i,2) ];
+
+                leftDistance(leftCount, i) = pdist(eye2line,'minkowski');
+                leftCount = leftCount+1;
+            elseif centerCoord(i,1) < mouthCenter(1)
+                eye2line = [ centerCoord(i,:) ;
+                             mouthCenter(1), centerCoord(i,2) ];
+
+                rightDistance(rightCount,i) = pdist(eye2line,'minkowski');
+                rightCount = rightCount+1;
+            end        
+        end
+        [~, leftIndex] = min(leftDistance);
+        [~, rightIndex] = min(rightDistance);
+        leftEye = centerCoord(leftIndex,:);
+        rightEye = centerCoord(rightIndex,:);
+
         break;
-    end
+     end
+        
 end
+            
+
+
