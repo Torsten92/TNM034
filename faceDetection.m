@@ -8,3 +8,4 @@ image = whiteBalance(image);
 
 
 finalResult = result < 100;
+

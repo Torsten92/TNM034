@@ -24,8 +24,6 @@ faceMask = bwareaopen(faceMask, numbOfpixels);
 se = strel('disk', 20);
 faceMask = imfill(faceMask, 'holes');
 faceMask = imdilate(imerode(faceMask, se), se);
-%masking, gives the complete mask
-
 
 %find all areas of white 
 centroidsOffaceMask  = regionprops(faceMask,'BoundingBox','Area');
@@ -41,10 +39,10 @@ L = length(centroidsOffaceMask);
 
 for n = 1:L
     if centroidsOffaceMask(n).Area > MinArea
-        %croppar ut alla områden i bilden till sub-bilder
+        %croppar ut alla omrï¿½den i bilden till sub-bilder
         cropSubImage = imcrop(image,[centroidsOffaceMask(n).BoundingBox]);
 
-        %generera om skinmasken på området
+        %generera om skinmasken pï¿½ omrï¿½det
         [~, skinRegion] = generate_skinmap(cropSubImage);
 
         %fill holes
@@ -58,35 +56,39 @@ for n = 1:L
         faceMask = imerode(imdilate(imerode(groupedSkinArea, se), se2), se3);
         faceMask = imfill(faceMask, 'holes');
         %decide how many pixels a region must have to not be erased 
-        [r, c] = size(faceMask);
-        numbOfpixels = round(r*c*0.043);
+        [row, col] = size(faceMask);
+        numbOfpixels = round(row*col*0.043);
         %erase white regions if it contains less than numbOfpixels pixels, we only
         %want one face region
         faceMask = bwareaopen(faceMask, numbOfpixels);
 
         %find all "ones" in faceMask
         [x, y] = find(faceMask);
+        X = [x'; y'];
+        
+        %calculate coefficient a and b and the center point
+        [z, a, b, ~] = fitellipse(X, 'linear', 'constraint', 'trace');
+        
+        %the ellipses center coords
+        h = z(1);
+        k = z(2);
 
-        X = [x';
-            y'];
+        %meshgrid uses x and y coords, we want rows represent y and x
+        %represent cols
+        [Y, X] = meshgrid(1:col, 1:row);
 
-        %ellipse mask
-
-        [zt, at, bt, ~] = fitellipse(X, 'linear', 'constraint', 'trace');
-        ellipseC = zt;
-        r_sq = [bt, at].^2;
-
-        [sizeX, sizeY] = size(faceMask);
-        [X, Y] = meshgrid(1:sizeY, 1:sizeX);
-        ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
+        % An ellipse centered at (h,k) is defined by (x-h)^2/a^2 + (y-k)^2/b^2 = 1 
+        a2 = a^2;
+        b2 = b^2;
+        a2b2 = a2*b2;
+        
+        ellipse_mask = (b2*(X-h).^2 + a2*(Y-k).^2 <= a2b2);
 
         %makes the ellipse bigger, important because somtimes it cuts eyes and mouths
         se = strel('disk', 20);
         ellipse_mask = imdilate(ellipse_mask,se);
 
-        faceMaskPlusElips = ellipse_mask;
-        faceMaskPlusElips = (faceMaskPlusElips > 0.1);
-        faceMask = faceMaskPlusElips > 0.1;
+        faceMask = ellipse_mask > 0.1;
 
         cropSubImage = im2double(cropSubImage);
         img = zeros(size(cropSubImage));
