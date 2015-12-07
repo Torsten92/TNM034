@@ -1,4 +1,4 @@
-function [result, who] = compareToDB(subImage)
+function who = compareToDB(subImage)
 
 %Set image dimensions
 w = 64; h = 64;
@@ -14,6 +14,5 @@ for i = 1:16
     eucDist(i) = norm(weight(:,i)-weigthInput)^2;
 end
 
-result = min(eucDist);
+[~, who] = min(eucDist);
 
-who = max(eucDist == result);

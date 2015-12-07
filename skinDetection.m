@@ -1,4 +1,4 @@
-function [img, faceMask] = skinDetection(image)
+function [img, faceMask] = faceDetection(image)
 
 img = 0;
 
@@ -71,67 +71,82 @@ for n = 1:L
             y'];
 
         %ellipse mask
+        try
+            [zt, at, bt, ~] = fitellipse(X, 'linear');
+            ellipseC = zt;
+            r_sq = [bt, at].^2;
 
-        [zt, at, bt, ~] = fitellipse(X, 'linear', 'constraint', 'trace');
-        ellipseC = zt;
-        r_sq = [bt, at].^2;
+            [sizeX, sizeY] = size(faceMask);
+            [X, Y] = meshgrid(1:sizeY, 1:sizeX);
 
-        [sizeX, sizeY] = size(faceMask);
-        [X, Y] = meshgrid(1:sizeY, 1:sizeX);
-        ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
+            ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
 
-        %makes the ellipse bigger, important because somtimes it cuts eyes and mouths
-        se = strel('disk', 20);
-        ellipse_mask = imdilate(ellipse_mask,se);
+            %makes the ellipse bigger, important because somtimes it cuts eyes and mouths
+            se = strel('disk', 20);
+            ellipse_mask = imdilate(ellipse_mask,se);
 
-        faceMaskPlusElips = ellipse_mask;
-        faceMaskPlusElips = (faceMaskPlusElips > 0.1);
+            faceMaskPlusElips = ellipse_mask;
+            faceMaskPlusElips = (faceMaskPlusElips > 0.1);
+
+        catch 
+            faceMaskPlusElips = faceMask;
+        end
+        
         faceMask = faceMaskPlusElips > 0.1;
 
         cropSubImage = im2double(cropSubImage);
         img = zeros(size(cropSubImage));
-        %img(:,:,1) = cropSubImage(:,:,1).*faceMask;
-        %img(:,:,2) = cropSubImage(:,:,2).*faceMask;
-        %img(:,:,3) = cropSubImage(:,:,3).*faceMask;
+
         img = cropSubImage;
 
         %Mouth detection
         [~, ~, mouthCenter] = mouthDetection(cropSubImage, faceMask);
-        if isnan(mouthCenter(1)) == 0
+        if ( isnan(mouthCenter(1)) == 0 )
             %Detect eyes and rotate image to align them to the horizontal plane
             [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);
-            [angle, ~] = triangulateFace(leftEye,rightEye,img,mouthCenter);
+            try
+                
+                [angle, ~] = triangulateFace(leftEye,rightEye,img,mouthCenter);
 
-            %rotate all
-            img = imrotate(img, angle, 'bilinear');
-            faceMask = imrotate(faceMask, angle, 'bilinear');
+                %rotate all
+                img = imrotate(img, angle, 'bilinear');
+                faceMask = imrotate(faceMask, angle, 'bilinear');
 
-            %redo all calculations for the rotated image
-            %Mouth detection
-            [~, ~, mouthCenter] = mouthDetection(img, faceMask);
+                %redo all calculations for the rotated image
+                %Mouth detection
+                [~, ~, mouthCenter] = mouthDetection(img, faceMask);
 
-            %Detect eyes and rotate image to align them to the horizontal plane
-            [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);    
+                %Detect eyes and rotate image to align them to the horizontal plane
+                [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);    
 
 
-            xSize = round(0.2*abs(rightEye(1,1)-leftEye(1,1)));
-            ySize = round(0.2*abs(rightEye(1,2)-mouthCenter(1,2)));
+                xSize = round(0.2*abs(rightEye(1,1)-leftEye(1,1)));
+                ySize = round(0.2*abs(rightEye(1,2)-mouthCenter(1,2)));
 
-            %calculate new mask
-            c = [leftEye(1,1)-xSize rightEye(1,1)+xSize rightEye(1,1)+xSize leftEye(1,1)-xSize];
-            r = [leftEye(1,2)-ySize rightEye(1,2)-ySize mouthCenter(1,2)+ySize mouthCenter(1,2)+ySize];
-            faceMask2 = roipoly(faceMask,c,r);
+                %calculate new mask
+                c = [leftEye(1,1)-xSize rightEye(1,1)+xSize rightEye(1,1)+xSize leftEye(1,1)-xSize];
+                r = [leftEye(1,2)-ySize rightEye(1,2)-ySize mouthCenter(1,2)+ySize mouthCenter(1,2)+ySize];
+                faceMask2 = roipoly(faceMask,c,r);
 
-            %recalculate and crop image with new mask
-            img(:,:,1) = img(:,:,1).*faceMask2;
-            img(:,:,2) = img(:,:,2).*faceMask2;
-            img(:,:,3) = img(:,:,3).*faceMask2;
-            [row, col] = find(faceMask2);
-            %faceMask2  = faceMask2(min(row):max(row), min(col):max(col));
-            img = img(min(row):max(row), min(col):max(col),:);
+                %recalculate and crop image with new mask
+                img(:,:,1) = img(:,:,1).*faceMask2;
+                img(:,:,2) = img(:,:,2).*faceMask2;
+                img(:,:,3) = img(:,:,3).*faceMask2;
+                [row, col] = find(faceMask2);
+                %faceMask2  = faceMask2(min(row):max(row), min(col):max(col));
+                img = img(min(row):max(row), min(col):max(col),:);
+                img = rgb2ycbcr(img);
+                %Normalize illumination
+                %img = 0.1 + (log(A)+1) ./ (10*log(35));
 
-            %Normalize illumination
-            img = 0.4 + (log(img)+0.4) ./ 3;
+                img(:,:,1) = 0.01 + (log(img(:,:,1))+1) ./ (0.94*log(35));
+
+                img = ycbcr2rgb(img);
+                figure;imshow(img)
+
+            catch
+                return;
+            end
         end 
     end
 end
