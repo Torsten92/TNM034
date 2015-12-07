@@ -88,7 +88,7 @@ for n = 1:L
         se = strel('disk', 20);
         ellipse_mask = imdilate(ellipse_mask,se);
 
-        faceMask = ellipse_mask > 0.1;
+        faceMask = ellipse_mask;
 
         cropSubImage = im2double(cropSubImage);
         img = zeros(size(cropSubImage));
