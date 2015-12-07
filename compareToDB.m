@@ -1,9 +1,9 @@
-function [result] = compareToDB(subImage)
+function [result, who] = compareToDB(subImage)
 
 %Set image dimensions
 w = 64; h = 64;
 
-subImage = imresize(rgb2gray(im2double(whiteBalance(subImage))), [w, h]);
+subImage = imresize(rgb2gray(im2double(subImage)), [w, h]);
 
 load('EigenfacesDB.mat');
 
@@ -15,3 +15,5 @@ for i = 1:16
 end
 
 result = min(eucDist);
+
+who = max(eucDist == result);

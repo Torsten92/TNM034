@@ -24,8 +24,6 @@ faceMask = bwareaopen(faceMask, numbOfpixels);
 se = strel('disk', 20);
 faceMask = imfill(faceMask, 'holes');
 faceMask = imdilate(imerode(faceMask, se), se);
-%masking, gives the complete mask
-
 
 %find all areas of white 
 centroidsOffaceMask  = regionprops(faceMask,'BoundingBox','Area');
@@ -59,7 +57,7 @@ for n = 1:L
         faceMask = imfill(faceMask, 'holes');
         %decide how many pixels a region must have to not be erased 
         [row, col] = size(faceMask);
-        numbOfpixels = round(r*c*0.043);
+        numbOfpixels = round(row*col*0.043);
         %erase white regions if it contains less than numbOfpixels pixels, we only
         %want one face region
         faceMask = bwareaopen(faceMask, numbOfpixels);
@@ -89,7 +87,7 @@ for n = 1:L
         %makes the ellipse bigger, important because somtimes it cuts eyes and mouths
         se = strel('disk', 20);
         ellipse_mask = imdilate(ellipse_mask,se);
-        
+
         faceMaskPlusElips = ellipse_mask;
         faceMaskPlusElips = (faceMaskPlusElips > 0.1);
         faceMask = faceMaskPlusElips > 0.1;

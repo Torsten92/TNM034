@@ -1,20 +1,15 @@
-function [ result ] = tnm034( im )
+function [finalResult, who] = tnm034(image)
 
-% result is in the range 0-1. Tröskla result and return 1 if low enough.
-% 
-% 
+image = whiteBalance(image);
 
-result = 1;
-[skinCorr, mouthCorr, eyeCorr, triCorr, noseCorr] = faceDetect(image);
+[subImage, faceMask] = skinDetection(image);
 
-for i = 1:antalbiler
-    [DBskinCorr, DBmouthCorr, DBeyeCorr, DBtriCorr, DBnoseCorr] = faceDetect(DBimage(i));
-    temp = abs(DBskinCorr-skinCorr) + abs(DBmouthCorr-mouthCorr) + ...
-        if temp < result
-            result = temp;
-        end
-end
+[result, who] = compareToDB(subImage);
 
-return result < 0.1;
+finalResult = result < 100;
 
+if finalResult == 1
+    who = sprintf('This is person number %d', who);
+else
+    who = 'This person does not belong here';
 end

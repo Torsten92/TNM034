@@ -22,97 +22,47 @@ mouthMap = mouthMap./max(mouthMap(:));
 %masking, gives the compleate mouthMap
 finalMouthMap = faceMask.* mouthMap;
 
-
 %dilation
 se2 = strel('disk', 8);
 mouthImg = imdilate(finalMouthMap, se2);
 
-
-%invert color, necessary when we subtract dilatedEyeMap with faceMask
-%mouthMap = imcomplement(mouthMap);
-
-
-
-
-
 %set the over half of the img to black
 [sizeX sizeY] = size(mouthImg);
-
-mouthImg(1:round(sizeX.*0.56),:) = 0;
-
-
-
-
-%if the pixel value is greater than 38% set pixel value to 1 the rest is 0
-
-mouthImg = mouthImg > 0.28;
-%mouthImg = imfill(mouthImg,[3 3],8)
-%assignin('base', 'stats', stats);
-
-
-
-
 [r c] = size(mouthMap);
 
 %decide how many pixels a region must have to not be erased 
 %we decided that regions that are has less than 0.23% pixels of the image will be erased (empriskt) 
-
-numbOfpixels = round(r*c*0.0010);
-
+numbOfpixels = round(r*c*0.0028);
 
 assignin('base', 'mouthMap', mouthImg);
 
-%Remove small regions
-se = strel('disk',1);        
-mouthImg = imerode(mouthImg,se);
+for mouthIntensity = 40:-1:10
+    
+    mouthIntensity = mouthIntensity/100;
+    mouthImg(1:round(sizeX.*0.6),:) = 0;
 
-se2 = strel('disk', 2);
-mouthImg = imdilate(mouthImg, se2);
-
-
-
+    %if the pixel value is greater than 38% set pixel value to 1 the rest is 0
+    mouthImg = mouthImg > mouthIntensity;
 
 
 
-%Find connected components (regions) in binary image
-cc = bwconncomp(mouthImg); 
-stats = regionprops(cc, 'Area','Eccentricity'); 
+    %Remove small regions
+    se = strel('disk',1);        
+    mouthImg = imerode(mouthImg,se);
 
+    se2 = strel('disk', 2);
+    mouthImg = imdilate(mouthImg, se2);
+    if(nnz(mouthImg) > numbOfpixels)
+        break;
+    end
+    
+    %erase white regions if it contains less than numbOfpixels pixels, we only
+    %want one mouth region
 
-
-%images mouth region must be bigger than 100 pixels and it's Eccentricity
-%must be greater than 0.84 (empiriskt)
-%Eccentricity is the ratio of the distance between the foci of the ellipse
-%and its major axis lengths, scalar
-
-
-idx = find([stats.Area] > 100 & [stats.Eccentricity] < 0.84); 
-
-%check labelmatrix(cc) elements that are members of idx
-mouthImgIdx = ismember(labelmatrix(cc), idx);
-assignin('base', 'labelmatrix', labelmatrix(cc));
-assignin('base', 'idx', idx);
-assignin('base', 'stats', stats);
-
-
-
-
-%check if all elements is nonzero, if true go over to next reduce method
-%Method: erase white regions if it contains less than numbOfpixels pixels, we only
-%want one mouth region
-if all(mouthImgIdx)
-    mouthImg = bwareaopen(mouthImgIdx, numbOfpixels);
-else
-    %else, use the other method
-    mouthImg = bwareaopen(mouthImg, numbOfpixels);
 end
 
-figure
-imshow(mouthImg)
-
-
-
 %Dilate first to fill lips
+mouthImg = bwareaopen(mouthImg, numbOfpixels);
 
 numbOfpixels = round(numbOfpixels/70);
 
@@ -132,4 +82,3 @@ ycentre = sum(weightedy(:)) / sum(L(:));
 xcentre = round(xcentre);
 ycentre = round(ycentre);
 mouthCenter = [xcentre, ycentre];
-
