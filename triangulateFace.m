@@ -1,13 +1,5 @@
-function [angle, triImg] = triangulateFace(leftEye, rightEye, subImage, mouthCenter)
+function angle = triangulateFace(leftEye, rightEye)
 
-xcentre = round(mouthCenter(1));
-ycentre = round(mouthCenter(2));
-
-
-polygon = int32([leftEye rightEye xcentre ycentre]);
-shapeInserter = vision.ShapeInserter('Shape','Polygons','BorderColor','Custom', 'CustomBorderColor', uint8([255 0 0]));
-
-triImg = step(shapeInserter, subImage, polygon); 
 
 %get normalized vector between the eyes
 normEyeVector = (rightEye-leftEye) / norm(rightEye-leftEye);
