@@ -1,6 +1,6 @@
-function [img, faceMask] = skinDetection(image)
+function [cropSubImage, faceMask] = skinDetection(image)
 
-img = 0;
+cropSubImage = 0;
 
 [~, skinRegion] = generate_skinmap(image);
 
@@ -89,31 +89,26 @@ for n = 1:L
         ellipse_mask = imdilate(ellipse_mask,se);
 
         faceMask = ellipse_mask;
-
+        
         cropSubImage = im2double(cropSubImage);
-        img = zeros(size(cropSubImage));
-        %img(:,:,1) = cropSubImage(:,:,1).*faceMask;
-        %img(:,:,2) = cropSubImage(:,:,2).*faceMask;
-        %img(:,:,3) = cropSubImage(:,:,3).*faceMask;
-        img = cropSubImage;
 
         %Mouth detection
         [~, ~, mouthCenter] = mouthDetection(cropSubImage, faceMask);
         if isnan(mouthCenter(1)) == 0
             %Detect eyes and rotate image to align them to the horizontal plane
-            [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);
-            [angle, ~] = triangulateFace(leftEye,rightEye,img,mouthCenter);
+            [leftEye, rightEye, ~] = eyeDetection(cropSubImage, faceMask, mouthCenter);
+            [angle, ~] = triangulateFace(leftEye,rightEye,cropSubImage,mouthCenter);
 
             %rotate all
-            img = imrotate(img, angle, 'bilinear');
+            cropSubImage = imrotate(cropSubImage, angle, 'bilinear');
             faceMask = imrotate(faceMask, angle, 'bilinear');
 
             %redo all calculations for the rotated image
             %Mouth detection
-            [~, ~, mouthCenter] = mouthDetection(img, faceMask);
+            [~, ~, mouthCenter] = mouthDetection(cropSubImage, faceMask);
 
             %Detect eyes and rotate image to align them to the horizontal plane
-            [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);    
+            [leftEye, rightEye, ~] = eyeDetection(cropSubImage, faceMask, mouthCenter);    
 
 
             xSize = round(0.2*abs(rightEye(1,1)-leftEye(1,1)));
@@ -125,15 +120,15 @@ for n = 1:L
             faceMask2 = roipoly(faceMask,c,r);
 
             %recalculate and crop image with new mask
-            img(:,:,1) = img(:,:,1).*faceMask2;
-            img(:,:,2) = img(:,:,2).*faceMask2;
-            img(:,:,3) = img(:,:,3).*faceMask2;
+            cropSubImage(:,:,1) = cropSubImage(:,:,1).*faceMask2;
+            cropSubImage(:,:,2) = cropSubImage(:,:,2).*faceMask2;
+            cropSubImage(:,:,3) = cropSubImage(:,:,3).*faceMask2;
             [row, col] = find(faceMask2);
             %faceMask2  = faceMask2(min(row):max(row), min(col):max(col));
-            img = img(min(row):max(row), min(col):max(col),:);
+            cropSubImage = cropSubImage(min(row):max(row), min(col):max(col),:);
 
             %Normalize illumination
-            img = 0.4 + (log(img)+0.4) ./ 3;
+            cropSubImage = 0.4 + (log(cropSubImage)+0.4) ./ 3;
         end 
     end
 end
