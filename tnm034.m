@@ -1,10 +1,10 @@
-function who = tnm034(image)
+function [finalResult, who, eucDist] = tnm034(image)
 
 image = whiteBalance(image);
 
 [subImage, faceMask] = faceDetection(image);
-
-who = compareToDB(subImage);
+figure;imshow(subImage)
+[result, who, eucDist] = compareToDB(subImage);
 
 finalResult = result < 10000;
 
