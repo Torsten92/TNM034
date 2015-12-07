@@ -67,7 +67,7 @@ for n = 1:L
         X = [x'; y'];
         
         %calculate coefficient a and b and the center point
-        [z, a, b, ~] = fitellipse(X, 'linear');
+        [z, a, b, ~] = fitellipse(X, 'linear', 'constraint', 'trace');
         
         %the ellipses center coords
         h = z(1);
