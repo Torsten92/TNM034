@@ -82,4 +82,3 @@ ycentre = sum(weightedy(:)) / sum(L(:));
 xcentre = round(xcentre);
 ycentre = round(ycentre);
 mouthCenter = [xcentre, ycentre];
-
