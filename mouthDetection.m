@@ -32,27 +32,25 @@ mouthImg = imdilate(finalMouthMap, se2);
 
 %decide how many pixels a region must have to not be erased 
 %we decided that regions that are has less than 0.23% pixels of the image will be erased (empriskt) 
-numbOfpixels = round(r*c*0.0028);
+minMouthArea = round(r*c*0.0028);
 
 assignin('base', 'mouthMap', mouthImg);
+
 
 for mouthIntensity = 40:-1:10
     
     mouthIntensity = mouthIntensity/100;
     mouthImg(1:round(sizeX.*0.6),:) = 0;
-
-    %if the pixel value is greater than 38% set pixel value to 1 the rest is 0
-    mouthImg = mouthImg > mouthIntensity;
-
-
+    
+    finalMouthMap = mouthImg > mouthIntensity;
 
     %Remove small regions
     se = strel('disk',1);        
-    mouthImg = imerode(mouthImg,se);
+    finalMouthMap = imerode(finalMouthMap,se);
 
     se2 = strel('disk', 2);
-    mouthImg = imdilate(mouthImg, se2);
-    if(nnz(mouthImg) > numbOfpixels)
+    finalMouthMap = imdilate(finalMouthMap, se2);
+    if(nnz(finalMouthMap) > minMouthArea)
         break;
     end
     
@@ -61,14 +59,16 @@ for mouthIntensity = 40:-1:10
 
 end
 
+
 %Dilate first to fill lips
-mouthImg = bwareaopen(mouthImg, numbOfpixels);
+finalMouthMap = bwareaopen(finalMouthMap, minMouthArea);
 
-numbOfpixels = round(numbOfpixels/70);
 
-se = strel('disk', numbOfpixels);
-mouthImg = imerode(imdilate(mouthImg, se), se);
-L = imfill(mouthImg, 'holes');
+minMouthArea = round(minMouthArea/70);
+
+se = strel('disk', minMouthArea);
+finalMouthMap = imerode(imdilate(finalMouthMap, se), se);
+L = imfill(finalMouthMap, 'holes');
 
 
 %find mouth center

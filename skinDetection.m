@@ -18,9 +18,11 @@ numbOfpixels = round(r*c*0.033);
 
 %erase white regions if it contains less than numbOfpixels pixels, we only
 %want one face region
+
 faceMask = bwareaopen(faceMask, numbOfpixels);
 
 %noise reduction
+
 se = strel('disk', 20);
 faceMask = imfill(faceMask, 'holes');
 faceMask = imdilate(imerode(faceMask, se), se);
@@ -129,6 +131,8 @@ for n = 1:L
 
             %Normalize illumination
             cropSubImage = 0.4 + (log(cropSubImage)+0.4) ./ 3;
-        end 
+        end
+    else
+        disp('flera ansikten kändes igen')
     end
 end
