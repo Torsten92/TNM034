@@ -37,8 +37,7 @@ function [out bin] = generate_skinmap(filename)
     Cb = img_ycbcr(:,:,2);
     Cr = img_ycbcr(:,:,3);
     
-    %Detect Skin, skin color cant be to dark because Y>=50
-    [r,c,v] = find(Cb>=77 & Cb<=135 & Cr>=130 & Cr<=173 & Y >= 50 & Y <= 255);
+    [r,c,v] = find(Cb>=77 & Cb<=135 & Cr>=130 & Cr<=173);
     numind = size(r,1);
     
     %Mark Skin Pixels
