@@ -39,7 +39,6 @@ assignin('base', 'mouthMap', mouthImg);
 
 for mouthIntensity = 0.4:-0.1:0.1
     
-    %mouthIntensity = mouthIntensity/100;
     mouthImg(1:round(sizeX.*0.6),:) = 0;
     
     finalMouthMap = mouthImg > mouthIntensity;
@@ -53,14 +52,11 @@ for mouthIntensity = 0.4:-0.1:0.1
     if(nnz(finalMouthMap) > minMouthArea)
         break;
     end
-    
-    %erase white regions if it contains less than numbOfpixels pixels, we only
-    %want one mouth region
 
 end
 
-
-%Dilate first to fill lips
+%erase white regions if it contains less than numbOfpixels pixels, we only
+%want one mouth region
 finalMouthMap = bwareaopen(finalMouthMap, minMouthArea);
 
 
