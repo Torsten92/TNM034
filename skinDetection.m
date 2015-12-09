@@ -12,6 +12,7 @@ se = strel('disk', 9);
 faceMask = (imdilate(groupedSkinArea, se));
 faceMask = imfill(faceMask, 'holes');
 
+
 %decide how many pixels a region must have to not be erased 
 [r, c] = size(faceMask);
 numbOfpixels = round(r*c*0.033);

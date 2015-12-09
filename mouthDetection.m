@@ -37,9 +37,9 @@ minMouthArea = round(r*c*0.0028);
 assignin('base', 'mouthMap', mouthImg);
 
 
-for mouthIntensity = 40:-1:10
+for mouthIntensity = 0.4:-0.1:0.1
     
-    mouthIntensity = mouthIntensity/100;
+    %mouthIntensity = mouthIntensity/100;
     mouthImg(1:round(sizeX.*0.6),:) = 0;
     
     finalMouthMap = mouthImg > mouthIntensity;
