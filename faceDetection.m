@@ -24,19 +24,14 @@ faceMask = bwareaopen(faceMask, numbOfpixels);
 se = strel('disk', 20);
 faceMask = imfill(faceMask, 'holes');
 faceMask = imdilate(imerode(faceMask, se), se);
-%masking, gives the complete mask
-
 
 %find all areas of white 
 centroidsOffaceMask  = regionprops(faceMask,'BoundingBox','Area');
-
 
 % Decide min area for faces to be detected
 [r c] = size(image);
 MinArea = 0.02*r*c; 
 L = length(centroidsOffaceMask);
-
-
 
 for n = 1:L
     
@@ -58,9 +53,11 @@ for n = 1:L
         %remove noise
         faceMask = imerode(imdilate(imerode(groupedSkinArea, se), se2), se3);
         faceMask = imfill(faceMask, 'holes');
+        
         %decide how many pixels a region must have to not be erased 
         [row, col] = size(faceMask);
         numbOfpixels = round(r*c*0.043);
+        
         %erase white regions if it contains less than numbOfpixels pixels, we only
         %want one face region
         faceMask = bwareaopen(faceMask, numbOfpixels);
@@ -70,10 +67,10 @@ for n = 1:L
 
         X = [x'; y'];
 
-       %fitellipse will not always return good values
-       %"crash handling"
+        %fitellipse will not always return good values
+        %"crash handling"
         try
-              %ellipse mask
+            %ellipse mask
             [z, a, b, ~] = fitellipse(X, 'linear', 'constraint', 'trace');
 
             %the ellipses center coords
@@ -128,7 +125,6 @@ for n = 1:L
                 %Detect eyes and rotate image to align them to the horizontal plane
                 [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);    
 
-
                 xSize = round(0.20*abs(rightEye(1,1)-leftEye(1,1)));
                 ySize = round(0.20*abs(rightEye(1,2)-mouthCenter(1,2)));
 
@@ -143,18 +139,19 @@ for n = 1:L
                 img(:,:,3) = img(:,:,3).*faceMask2;
                 [row, col] = find(faceMask2);
                 
+                %crop image
                 img = img(min(row):max(row), min(col):max(col),:);
                 
                 %Normalize illumination
                 img = rgb2ycbcr(img);
                 img(:,:,1) = histeq(img(:,:,1));
                 img = ycbcr2rgb(img);
-                figure;imshow(img)
+                %figure;imshow(img)
             catch
                 disp('error');
             end
-         
-          
-        end 
+        else
+          disp('no mouth detcted');
+        end       
     end
 end
