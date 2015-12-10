@@ -38,7 +38,7 @@ function [out bin] = generate_skinmap(filename)
     Cr = img_ycbcr(:,:,3);
     
     %Skin color interval 
-    [r,c,v] = find(Cb>=77 & Cb<=135 & Cr>=130 & Cr<=173);
+    [r,c,v] = find(Cb>=77 & Cb<=135 & Cr>=130 & Cr<=173 & Y >= 50 & Y <= 255);
     numind = size(r,1);
     
     %Mark Skin Pixels
