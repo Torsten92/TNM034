@@ -29,7 +29,7 @@ mouthImg = imdilate(faceMask, se2);
 mouthImg(1:round(sizeX.*0.6),:) = 0;
 
 %decide how many pixels a region must have to not be erased 
-%we decided that regions that are has less than 0.23% pixels of the image will be erased (empriskt)
+%we decided that regions that are has less than 0.28% pixels of the image will be erased (empriskt)
 [row, col] = size(faceMask);
 minMouthArea = round(row*col*0.0028);
 

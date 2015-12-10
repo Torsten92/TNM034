@@ -1,7 +1,5 @@
 function [img, faceMask] = faceDetection(image)
 
-img = 0;
-
 [~, skinRegion] = generate_skinmap(image);
 
 %fill holes

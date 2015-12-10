@@ -1,5 +1,6 @@
 function [leftEye, rightEye, eyeImg] = eyeDetection(subImage, faceMask, mouthCenter)
-leftEye=0;rightEye = 0;
+leftEye = 0;
+rightEye = 0;
 
 %eye map
 %Minimum size of the eye is 0.0063 percent
