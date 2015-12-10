@@ -88,19 +88,19 @@ for n = 1:L
             se = strel('disk', 20);
             ellipse_mask = imdilate(ellipse_mask,se);
 
-            faceMaskPlusElips = ellipse_mask;
-            faceMaskPlusElips = (faceMaskPlusElips > 0.1);
+            faceMask = ellipse_mask;
+            faceMask = (faceMask > 0.1);
 
         catch 
-            faceMaskPlusElips = faceMask;
+            %if no ellipse can be fitted try and use original mask
+            faceMask = faceMask;
             se = strel('disk', 20);
-            faceMaskPlusElips = imdilate(faceMaskPlusElips,se);
-
-            faceMaskPlusElips = ellipse_mask;
-            faceMaskPlusElips = (faceMaskPlusElips > 0.1);
+            faceMask = imdilate(faceMask,se);
+            faceMask = imfill(faceMask, 'holes');
+            faceMask = ellipse_mask;
+            faceMask = (faceMask > 0.1);
         end
         
-        faceMask = faceMaskPlusElips > 0.1;
 
         cropSubImage = im2double(cropSubImage);
         img = zeros(size(cropSubImage));            
@@ -147,7 +147,7 @@ for n = 1:L
                 img = rgb2ycbcr(img);
                 img(:,:,1) = histeq(img(:,:,1));
                 img = ycbcr2rgb(img);
-                %figure;imshow(img)
+                figure;imshow(img)
             catch
                 disp('error');
             end

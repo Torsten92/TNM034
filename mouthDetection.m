@@ -27,21 +27,20 @@ se2 = strel('disk', 8);
 mouthImg = imdilate(finalMouthMap, se2);
 
 %set the over half of the img to black
-[sizeX sizeY] = size(mouthImg);
-[r c] = size(mouthMap);
+[sizeX, sizeY] = size(mouthImg);
+[r, c] = size(mouthMap);
 
 %decide how many pixels a region must have to not be erased 
 %we decided that regions that are has less than 0.23% pixels of the image will be erased (empriskt) 
 numbOfpixels = round(r*c*0.0028);
 
 assignin('base', 'mouthMap', mouthImg);
+mouthImg(1:round(sizeX.*0.6),:) = 0;
 
-for mouthIntensity = 40:-1:10
+for mouthIntensity = 0.4:-0.01:0.1
     
-    mouthIntensity = mouthIntensity/100;
-    mouthImg(1:round(sizeX.*0.6),:) = 0;
 
-    %if the pixel value is greater than 38% set pixel value to 1 the rest is 0
+    %if the pixel value is greater than mouthIntensity set pixel value to 1 the rest is 0
     mouthImgMask = mouthImg > mouthIntensity;
 
 
@@ -51,13 +50,12 @@ for mouthIntensity = 40:-1:10
     mouthImgMask = imerode(mouthImgMask,se);
 
     se2 = strel('disk', 2);
+    
     mouthImgMask = imdilate(mouthImgMask, se2);
+    
     if(nnz(mouthImgMask) > numbOfpixels)
         break;
     end
-    
-    %erase white regions if it contains less than numbOfpixels pixels, we only
-    %want one mouth region
 
 end
 
