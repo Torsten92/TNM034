@@ -3,7 +3,7 @@ leftEye = 0;
 rightEye = 0;
 
 %eye map
-%Minimum size of the eye is 0.0063 percent
+%Minimum size of the eye is 0.063 percent of the faceMask area
 [sizeX, sizeY] = size(faceMask);
 nrEyePixels = round(sizeX*sizeY*0.00063);
 
