@@ -42,10 +42,10 @@ for n = 1:L
     
     if centroidsOffaceMask(n).Area > MinArea
         
-        %croppar ut alla områden i bilden till sub-bilder
+        %crop all detected faces into subimages
         cropSubImage = imcrop(image,[centroidsOffaceMask(n).BoundingBox]);
 
-        %generera om skinmasken på området
+        %generate a new skinmap for the cropped image
         [~, skinRegion] = generate_skinmap(cropSubImage);
 
         %fill holes
@@ -59,7 +59,7 @@ for n = 1:L
         faceMask = imerode(imdilate(imerode(groupedSkinArea, se), se2), se3);
         faceMask = imfill(faceMask, 'holes');
         %decide how many pixels a region must have to not be erased 
-        [r, c] = size(faceMask);
+        [row, col] = size(faceMask);
         numbOfpixels = round(r*c*0.043);
         %erase white regions if it contains less than numbOfpixels pixels, we only
         %want one face region
@@ -68,37 +68,39 @@ for n = 1:L
         %find all "ones" in faceMask
         [x, y] = find(faceMask);
 
-        X = [x';
-            y'];
+        X = [x'; y'];
 
        %fitellipse will not always return good values
        %"crash handling"
         try
               %ellipse mask
-            [zt, at, bt, ~] = fitellipse(X, 'linear', 'constraint', 'trace');
-            ellipseC = zt;
-            r_sq = [bt, at].^2;
+            [z, a, b, ~] = fitellipse(X, 'linear', 'constraint', 'trace');
 
-            [sizeX, sizeY] = size(faceMask);
-            [X, Y] = meshgrid(1:sizeY, 1:sizeX);
+            %the ellipses center coords
+            h = z(1);
+            k = z(2);
 
-            ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
+            %meshgrid uses x and y coords, we want rows represent y and x
+            %represent cols
+            [Y, X] = meshgrid(1:col, 1:row);
+
+            % An ellipse centered at (h,k) is defined by (x-h)^2/a^2 + (y-k)^2/b^2 = 1 
+            a2 = a^2;
+            b2 = b^2;
+            a2b2 = a2*b2;
+
+            ellipse_mask = (b2*(X-h).^2 + a2*(Y-k).^2 <= a2b2);
 
             %makes the ellipse bigger, important because somtimes it cuts eyes and mouths
             se = strel('disk', 20);
             ellipse_mask = imdilate(ellipse_mask,se);
 
             faceMask = ellipse_mask;
-            faceMask = (faceMask > 0.1);
-
         catch 
             %if no ellipse can be fitted try and use original mask
-            faceMask = faceMask;
             se = strel('disk', 20);
             faceMask = imdilate(faceMask,se);
             faceMask = imfill(faceMask, 'holes');
-            faceMask = ellipse_mask;
-            faceMask = (faceMask > 0.1);
         end
         
 
