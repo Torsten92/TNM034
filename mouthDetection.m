@@ -31,7 +31,7 @@ mouthImg = imdilate(finalMouthMap, se2);
 [r c] = size(mouthMap);
 
 %decide how many pixels a region must have to not be erased 
-%we decided that regions that are has less than 0.23% pixels of the image will be erased (empriskt) 
+%we decided that regions that are has less than 0.28% pixels of the image will be erased (empriskt) 
 minMouthArea = round(r*c*0.0028);
 
 assignin('base', 'mouthMap', mouthImg);

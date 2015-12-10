@@ -1,4 +1,4 @@
-function [finalResult, who, eucDist] = tnm034(image)
+function [who] = tnm034(image)
 
 image = whiteBalance(image);
 

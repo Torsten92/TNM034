@@ -6,15 +6,7 @@ luminanceImage = hsvImage(:,:,3);
 saturationImage = hsvImage(:,:,2);
 colorImage = hsvImage(:,:,1);
 
-%{
-imshow(hsvImage)
-figure
-imshow((hsvImage(:,:,1)))
-figure
-imshow((hsvImage(:,:,2)))
-figure
-imshow((hsvImage(:,:,2)))
-%}
+
 luminanceImage2 = luminanceImage;
 
 luminanceImage2(luminanceImage2 < 0.95*max(max(luminanceImage2)));

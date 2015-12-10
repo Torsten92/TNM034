@@ -1,6 +1,5 @@
 function [cropSubImage, faceMask] = skinDetection(image)
 
-
 cropSubImage = 0;
 
 [~, skinRegion] = generate_skinmap(image);
