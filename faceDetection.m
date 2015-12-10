@@ -36,16 +36,13 @@ centroidsOffaceMask  = regionprops(faceMask,'BoundingBox','Area');
 [r c] = size(image);
 MinArea = 0.02*r*c; 
 L = length(centroidsOffaceMask);
-%[row, col] = find(faceMask);
-   % cropSubImage  = image(min(row):max(row), min(col):max(col), :);
-
 
 for n = 1:L
     if centroidsOffaceMask(n).Area > MinArea
-        %croppar ut alla omr�den i bilden till sub-bilder
+        %crop all detected faces into subimages
         cropSubImage = imcrop(image,[centroidsOffaceMask(n).BoundingBox]);
 
-        %generera om skinmasken p� omr�det
+        %generate a new skinmap for the cropped image
         [~, skinRegion] = generate_skinmap(cropSubImage);
 
         %fill holes
@@ -130,18 +127,15 @@ for n = 1:L
                 cropSubImage(:,:,1) = cropSubImage(:,:,1).*faceMask2;
                 cropSubImage(:,:,2) = cropSubImage(:,:,2).*faceMask2;
                 cropSubImage(:,:,3) = cropSubImage(:,:,3).*faceMask2;
+                
                 [row, col] = find(faceMask2);
-                %faceMask2  = faceMask2(min(row):max(row), min(col):max(col));
-                cropSubImage = cropSubImage(min(row):max(row), min(col):max(col),:);
-                cropSubImage = rgb2ycbcr(cropSubImage);
+
+                img = img(min(row):max(row), min(col):max(col),:);
+                
                 %Normalize illumination
-                %img = 0.1 + (log(A)+1) ./ (10*log(35));
-
-                cropSubImage(:,:,1) = 0.01 + (log(cropSubImage(:,:,1))+1) ./ (0.94*log(35));
-
-
-                cropSubImage = ycbcr2rgb(cropSubImage);
-                figure;imshow(cropSubImage)
+                img = rgb2ycbcr(img);
+                img(:,:,1) = histeq(img(:,:,1));
+                img = ycbcr2rgb(img);
 
             catch
                 return;
