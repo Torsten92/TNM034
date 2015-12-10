@@ -105,7 +105,7 @@ for n = 1:L
         img = zeros(size(cropSubImage));            
         img = cropSubImage;
         %Mouth detectioninitDB
-        [~, ~, mouthCenter] = mouthDetection(cropSubImage, faceMask);
+        [mouthCenter] = mouthDetection(cropSubImage, faceMask);
         if ( isnan(mouthCenter(1)) == 0 )
             %Detect eyes and rotate image to align them to the horizontal plane
             [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);
@@ -120,7 +120,7 @@ for n = 1:L
 
                 %redo all calculations for the rotated image
                 %Mouth detection
-                [~, ~, mouthCenter] = mouthDetection(img, faceMask);
+                [mouthCenter] = mouthDetection(img, faceMask);
 
                 %Detect eyes and rotate image to align them to the horizontal plane
                 [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);    
