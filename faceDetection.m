@@ -1,6 +1,6 @@
-function [cropSubImage, faceMask] = skinDetection(image)
+function [img, faceMask] = skinDetection(image)
 
-cropSubImage = 0;
+img = 0;
 
 [~, skinRegion] = generate_skinmap(image);
 
@@ -40,10 +40,10 @@ L = length(centroidsOffaceMask);
 for n = 1:L
     if centroidsOffaceMask(n).Area > MinArea
         %crop all detected faces into subimages
-        cropSubImage = imcrop(image,[centroidsOffaceMask(n).BoundingBox]);
+        img = imcrop(image,[centroidsOffaceMask(n).BoundingBox]);
 
         %generate a new skinmap for the cropped image
-        [~, skinRegion] = generate_skinmap(cropSubImage);
+        [~, skinRegion] = generate_skinmap(img);
 
         %fill holes
         groupedSkinArea = imfill(skinRegion, 'holes');
@@ -92,28 +92,27 @@ for n = 1:L
             faceMask = ellipse_mask;
         end
         
-        cropSubImage = im2double(cropSubImage);
-
+        img = im2double(img);
 
         %Mouth detection
-        [~, ~, mouthCenter] = mouthDetection(cropSubImage, faceMask);
+        [~, ~, mouthCenter] = mouthDetection(img, faceMask);
         if ( isnan(mouthCenter(1)) == 0 )
             %Detect eyes and rotate image to align them to the horizontal plane
 
-            [leftEye, rightEye, ~] = eyeDetection(cropSubImage, faceMask, mouthCenter);
+            [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);
             try
-                [angle, ~] = triangulateFace(leftEye,rightEye,cropSubImage,mouthCenter);
-
+                angle = triangulateFace(leftEye,rightEye);
+                
                 %rotate all
-                cropSubImage = imrotate(cropSubImage, angle, 'bilinear');
+                img = imrotate(img, angle, 'bilinear');
                 faceMask = imrotate(faceMask, angle, 'bilinear');
 
                 %redo all calculations for the rotated image
                 %Mouth detection
-                [~, ~, mouthCenter] = mouthDetection(cropSubImage, faceMask);
+                [~, ~, mouthCenter] = mouthDetection(img, faceMask);
 
                 %Detect eyes and rotate image to align them to the horizontal plane
-                [leftEye, rightEye, ~] = eyeDetection(cropSubImage, faceMask, mouthCenter);       
+                [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);       
 
                 xSize = round(0.2*abs(rightEye(1,1)-leftEye(1,1)));
                 ySize = round(0.2*abs(rightEye(1,2)-mouthCenter(1,2)));
@@ -124,9 +123,9 @@ for n = 1:L
                 faceMask2 = roipoly(faceMask,c,r);
 
                 %recalculate and crop image with new mask
-                cropSubImage(:,:,1) = cropSubImage(:,:,1).*faceMask2;
-                cropSubImage(:,:,2) = cropSubImage(:,:,2).*faceMask2;
-                cropSubImage(:,:,3) = cropSubImage(:,:,3).*faceMask2;
+                img(:,:,1) = img(:,:,1).*faceMask2;
+                img(:,:,2) = img(:,:,2).*faceMask2;
+                img(:,:,3) = img(:,:,3).*faceMask2;
                 
                 [row, col] = find(faceMask2);
 
