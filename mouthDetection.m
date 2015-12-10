@@ -31,40 +31,44 @@ mouthImg = imdilate(finalMouthMap, se2);
 [r c] = size(mouthMap);
 
 %decide how many pixels a region must have to not be erased 
-%we decided that regions that are has less than 0.28% pixels of the image will be erased (empriskt) 
-minMouthArea = round(r*c*0.0028);
+%we decided that regions that are has less than 0.23% pixels of the image will be erased (empriskt) 
+numbOfpixels = round(r*c*0.0028);
 
 assignin('base', 'mouthMap', mouthImg);
 
-
-for mouthIntensity = 0.4:-0.1:0.1
+for mouthIntensity = 40:-1:10
     
+    mouthIntensity = mouthIntensity/100;
     mouthImg(1:round(sizeX.*0.6),:) = 0;
-    
-    finalMouthMap = mouthImg > mouthIntensity;
+
+    %if the pixel value is greater than 38% set pixel value to 1 the rest is 0
+    mouthImgMask = mouthImg > mouthIntensity;
+
+
 
     %Remove small regions
     se = strel('disk',1);        
-    finalMouthMap = imerode(finalMouthMap,se);
+    mouthImgMask = imerode(mouthImgMask,se);
 
     se2 = strel('disk', 2);
-    finalMouthMap = imdilate(finalMouthMap, se2);
-    if(nnz(finalMouthMap) > minMouthArea)
+    mouthImgMask = imdilate(mouthImgMask, se2);
+    if(nnz(mouthImgMask) > numbOfpixels)
         break;
     end
+    
+    %erase white regions if it contains less than numbOfpixels pixels, we only
+    %want one mouth region
 
 end
 
-%erase white regions if it contains less than numbOfpixels pixels, we only
-%want one mouth region
-finalMouthMap = bwareaopen(finalMouthMap, minMouthArea);
+%Dilate first to fill lips
+mouthImgMask = bwareaopen(mouthImgMask, numbOfpixels);
 
+numbOfpixels = round(numbOfpixels/70);
 
-minMouthArea = round(minMouthArea/70);
-
-se = strel('disk', minMouthArea);
-finalMouthMap = imerode(imdilate(finalMouthMap, se), se);
-L = imfill(finalMouthMap, 'holes');
+se = strel('disk', numbOfpixels);
+mouthImgMask = imerode(imdilate(mouthImgMask, se), se);
+L = imfill(mouthImgMask, 'holes');
 
 
 %find mouth center
@@ -78,3 +82,4 @@ ycentre = sum(weightedy(:)) / sum(L(:));
 xcentre = round(xcentre);
 ycentre = round(ycentre);
 mouthCenter = [xcentre, ycentre];
+

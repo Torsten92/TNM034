@@ -91,7 +91,7 @@ for intensityThreshold = 99:-1:40
                                     centerCoord(i,2) = round( (centerCoord(i,2)+centerCoord(j,2))/2);
 
                                     %remove unwanted points
-                                    centerCoord(j,:) = [sizeX, 0];
+                                    centerCoord(j,:) = [1000000, 1000000];
                                 end
                             end
                         end
@@ -109,5 +109,6 @@ for intensityThreshold = 99:-1:40
         
         return;
     end
+    
 end
 

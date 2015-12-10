@@ -1,4 +1,4 @@
-function [result, who, eucDist] = compareToDB(subImage)
+function [who, result] = compareToDB(subImage)
 
 %Set image dimensions
 w = 64; h = 64;

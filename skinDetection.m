@@ -35,13 +35,12 @@ centroidsOffaceMask  = regionprops(faceMask,'BoundingBox','Area');
 [r c] = size(image);
 MinArea = 0.02*r*c; 
 L = length(centroidsOffaceMask);
-
+%[row, col] = find(faceMask);
+   % cropSubImage  = image(min(row):max(row), min(col):max(col), :);
 
 
 for n = 1:L
-    
     if centroidsOffaceMask(n).Area > MinArea
-        
         %croppar ut alla områden i bilden till sub-bilder
         cropSubImage = imcrop(image,[centroidsOffaceMask(n).BoundingBox]);
 
@@ -71,11 +70,9 @@ for n = 1:L
         X = [x';
             y'];
 
-       %fitellipse will not always return good values
-       %"crash handling"
+        %ellipse mask
         try
-              %ellipse mask
-            [zt, at, bt, ~] = fitellipse(X, 'linear', 'constraint', 'trace');
+            [zt, at, bt, ~] = fitellipse(X, 'linear');
             ellipseC = zt;
             r_sq = [bt, at].^2;
 
@@ -93,27 +90,23 @@ for n = 1:L
 
         catch 
             faceMaskPlusElips = faceMask;
-            se = strel('disk', 20);
-            faceMaskPlusElips = imdilate(faceMaskPlusElips,se);
-
-            faceMaskPlusElips = ellipse_mask;
-            faceMaskPlusElips = (faceMaskPlusElips > 0.1);
         end
         
         faceMask = faceMaskPlusElips > 0.1;
 
         cropSubImage = im2double(cropSubImage);
-        img = zeros(size(cropSubImage));            
+        img = zeros(size(cropSubImage));
+
         img = cropSubImage;
-        %Mouth detectioninitDB
+
+        %Mouth detection
         [~, ~, mouthCenter] = mouthDetection(cropSubImage, faceMask);
         if ( isnan(mouthCenter(1)) == 0 )
             %Detect eyes and rotate image to align them to the horizontal plane
             [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);
-            
-            %if left or right eye does not exist return error
-            try 
-                angle = triangulateFace(leftEye,rightEye);
+            try
+                
+                [angle, ~] = triangulateFace(leftEye,rightEye,img,mouthCenter);
 
                 %rotate all
                 img = imrotate(img, angle, 'bilinear');
@@ -127,8 +120,8 @@ for n = 1:L
                 [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);    
 
 
-                xSize = round(0.20*abs(rightEye(1,1)-leftEye(1,1)));
-                ySize = round(0.20*abs(rightEye(1,2)-mouthCenter(1,2)));
+                xSize = round(0.2*abs(rightEye(1,1)-leftEye(1,1)));
+                ySize = round(0.2*abs(rightEye(1,2)-mouthCenter(1,2)));
 
                 %calculate new mask
                 c = [leftEye(1,1)-xSize rightEye(1,1)+xSize rightEye(1,1)+xSize leftEye(1,1)-xSize];
@@ -140,19 +133,20 @@ for n = 1:L
                 img(:,:,2) = img(:,:,2).*faceMask2;
                 img(:,:,3) = img(:,:,3).*faceMask2;
                 [row, col] = find(faceMask2);
-                
+                %faceMask2  = faceMask2(min(row):max(row), min(col):max(col));
                 img = img(min(row):max(row), min(col):max(col),:);
-                
-                %Normalize illumination
                 img = rgb2ycbcr(img);
-                img(:,:,1) = histeq(img(:,:,1));
+                %Normalize illumination
+                %img = 0.1 + (log(A)+1) ./ (10*log(35));
+
+                img(:,:,1) = 0.01 + (log(img(:,:,1))+1) ./ (0.94*log(35));
+
                 img = ycbcr2rgb(img);
-                %figure;imshow(img)
+                figure;imshow(img)
+
             catch
-                disp('error');
+                return;
             end
-         
-          
         end 
     end
 end
