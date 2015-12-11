@@ -1,7 +1,5 @@
 function [img, faceMask] = faceDetection(image)
 
-img = 0;
-
 [~, skinRegion] = generate_skinmap(image);
 
 %fill holes
@@ -24,28 +22,23 @@ faceMask = bwareaopen(faceMask, numbOfpixels);
 se = strel('disk', 20);
 faceMask = imfill(faceMask, 'holes');
 faceMask = imdilate(imerode(faceMask, se), se);
-%masking, gives the complete mask
-
 
 %find all areas of white 
 centroidsOffaceMask  = regionprops(faceMask,'BoundingBox','Area');
-
 
 % Decide min area for faces to be detected
 [r c] = size(image);
 MinArea = 0.02*r*c; 
 L = length(centroidsOffaceMask);
 
-
-
 for n = 1:L
     
     if centroidsOffaceMask(n).Area > MinArea
         
-        %croppar ut alla områden i bilden till sub-bilder
+        %crop all detected faces into subimages
         cropSubImage = imcrop(image,[centroidsOffaceMask(n).BoundingBox]);
 
-        %generera om skinmasken på området
+        %generate a new skinmap for the cropped image
         [~, skinRegion] = generate_skinmap(cropSubImage);
 
         %fill holes
@@ -58,9 +51,11 @@ for n = 1:L
         %remove noise
         faceMask = imerode(imdilate(imerode(groupedSkinArea, se), se2), se3);
         faceMask = imfill(faceMask, 'holes');
+        
         %decide how many pixels a region must have to not be erased 
-        [r, c] = size(faceMask);
+        [row, col] = size(faceMask);
         numbOfpixels = round(r*c*0.043);
+        
         %erase white regions if it contains less than numbOfpixels pixels, we only
         %want one face region
         faceMask = bwareaopen(faceMask, numbOfpixels);
@@ -68,45 +63,47 @@ for n = 1:L
         %find all "ones" in faceMask
         [x, y] = find(faceMask);
 
-        X = [x';
-            y'];
+        X = [x'; y'];
 
-       %fitellipse will not always return good values
-       %"crash handling"
+        %fitellipse will not always return good values
+        %"crash handling"
         try
-              %ellipse mask
-            [zt, at, bt, ~] = fitellipse(X, 'linear', 'constraint', 'trace');
-            ellipseC = zt;
-            r_sq = [bt, at].^2;
+            %ellipse mask
+            [z, a, b, ~] = fitellipse(X, 'linear', 'constraint', 'trace');
 
-            [sizeX, sizeY] = size(faceMask);
-            [X, Y] = meshgrid(1:sizeY, 1:sizeX);
+            %the ellipses center coords
+            h = z(1);
+            k = z(2);
 
-            ellipse_mask = ((r_sq(1) * (Y - ellipseC(1)) .^ 2 + r_sq(2) * (X - ellipseC(2)) .^ 2) <= prod(r_sq));
+            %meshgrid uses x and y coords, we want rows represent y and x
+            %represent cols
+            [Y, X] = meshgrid(1:col, 1:row);
+
+            % An ellipse centered at (h,k) is defined by (x-h)^2/a^2 + (y-k)^2/b^2 = 1 
+            a2 = a^2;
+            b2 = b^2;
+            a2b2 = a2*b2;
+
+            ellipse_mask = (b2*(X-h).^2 + a2*(Y-k).^2 <= a2b2);
 
             %makes the ellipse bigger, important because somtimes it cuts eyes and mouths
             se = strel('disk', 20);
             ellipse_mask = imdilate(ellipse_mask,se);
 
-            faceMaskPlusElips = ellipse_mask;
-            faceMaskPlusElips = (faceMaskPlusElips > 0.1);
-
+            faceMask = ellipse_mask;
         catch 
-            faceMaskPlusElips = faceMask;
+            %if no ellipse can be fitted try and use original mask
             se = strel('disk', 20);
-            faceMaskPlusElips = imdilate(faceMaskPlusElips,se);
-
-            faceMaskPlusElips = ellipse_mask;
-            faceMaskPlusElips = (faceMaskPlusElips > 0.1);
+            faceMask = imdilate(faceMask,se);
+            faceMask = imfill(faceMask, 'holes');
         end
         
-        faceMask = faceMaskPlusElips > 0.1;
 
         cropSubImage = im2double(cropSubImage);
         img = zeros(size(cropSubImage));            
         img = cropSubImage;
         %Mouth detectioninitDB
-        [~, ~, mouthCenter] = mouthDetection(cropSubImage, faceMask);
+        [mouthCenter] = mouthDetection(cropSubImage, faceMask);
         if ( isnan(mouthCenter(1)) == 0 )
             %Detect eyes and rotate image to align them to the horizontal plane
             [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);
@@ -121,11 +118,10 @@ for n = 1:L
 
                 %redo all calculations for the rotated image
                 %Mouth detection
-                [~, ~, mouthCenter] = mouthDetection(img, faceMask);
+                [mouthCenter] = mouthDetection(img, faceMask);
 
                 %Detect eyes and rotate image to align them to the horizontal plane
                 [leftEye, rightEye, ~] = eyeDetection(img, faceMask, mouthCenter);    
-
 
                 xSize = round(0.20*abs(rightEye(1,1)-leftEye(1,1)));
                 ySize = round(0.20*abs(rightEye(1,2)-mouthCenter(1,2)));
@@ -141,6 +137,7 @@ for n = 1:L
                 img(:,:,3) = img(:,:,3).*faceMask2;
                 [row, col] = find(faceMask2);
                 
+                %crop image
                 img = img(min(row):max(row), min(col):max(col),:);
                 
                 %Normalize illumination
@@ -151,8 +148,8 @@ for n = 1:L
             catch
                 disp('error');
             end
-         
-          
-        end 
+        else
+          disp('no mouth detcted');
+        end       
     end
 end

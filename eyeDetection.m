@@ -1,9 +1,10 @@
 function [leftEye, rightEye, eyeImg] = eyeDetection(subImage, faceMask, mouthCenter)
-leftEye=0;rightEye = 0;
+leftEye = 0;
+rightEye = 0;
 
-[sizeX, sizeY] = size(faceMask);
 %eye map
-%Minimum size of the eye is 0.0063 percent
+%Minimum size of the eye is 0.063 percent of the faceMask area
+[sizeX, sizeY] = size(faceMask);
 nrEyePixels = round(sizeX*sizeY*0.00063);
 
 %Convert to yCbCr color space
@@ -34,20 +35,19 @@ eyeMap = eyeMapHq.*eyeMapL;
 se2 = strel('disk', 10);
 dilatedEyeMap = imdilate(eyeMap, se2);
 
-%find eyes as a mask
+%find eyes as a mask by normalizing values and removing pixels outside of
+%our facemask
 dilatedEyeMap = (dilatedEyeMap./max(dilatedEyeMap(:))).*faceMask;
 
 
 %Declare final eye image
 eyeImg = 0;
-breakCondition = 0;
-%Loop though eyeImg intensity value and stop when we find two eyes.
-for intensityThreshold = 99:-1:40
-    
-    if breakCondition == 0
-        eyeImg = dilatedEyeMap>(intensityThreshold/100);
 
-        %Filter away eye outside of a certain area defined by two circles
+%Loop though eyeImg intensity values and stop when we find two eyes.
+for intensityThreshold = 0.99:-0.01:0.4
+        eyeImg = dilatedEyeMap>(intensityThreshold);
+
+        %Filter away eyes outside of a certain area defined by two circles
         %and one cone.
         innerRadius = (mouthCenter(2)*0.3)^2;
         outerRadius = (mouthCenter(2)*0.7)^2;
@@ -64,13 +64,15 @@ for intensityThreshold = 99:-1:40
         %Final mask that represent the area where eyes may be.
         tempMask = (tempMask2-tempMask1).*tempMask3;
     
-        %remove white pixels below mouth
+        %remove white pixels below mouth (necessary due to the nature of 
+        %our cone)
         tempMask((mouthCenter(2)-20):end, : )=0;
 
         eyeImg = eyeImg.*tempMask;
         eyeImg = bwareaopen(eyeImg, nrEyePixels);
         [centerCoord, r] = imfindcircles(eyeImg,[10,20]);
-        %If we found two eyes or more
+        %Run code below if we found two eyes or more. This will end the 
+        %loop using the break; command
         [sizeX ~] = size(centerCoord);
         if (sizeX) ~= 0;
             %check if points exist on both sides of the eye
@@ -90,25 +92,22 @@ for intensityThreshold = 99:-1:40
                                     centerCoord(i,1) = round( (centerCoord(i,1)+centerCoord(j,1))/2);
                                     centerCoord(i,2) = round( (centerCoord(i,2)+centerCoord(j,2))/2);
 
-                                    %remove unwanted points
+                                    %remove unwanted points by giving them
+                                    %high values
                                     centerCoord(j,:) = [1000000, 1000000];
                                 end
                             end
                         end
                     end
+                    %Sort eye coordinates by their x position and add them
+                    %to leftEye and rightEye
                     centerCoord = sortrows(centerCoord);
                     leftEye = round(centerCoord(1,:));
                     rightEye = round(centerCoord(2,:));
                     
-                    breakCondition = 1;
-                   
+                    break;
                 end
             end
         end
-    else
-        
-        return;
-    end
-    
 end
 

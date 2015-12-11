@@ -1,10 +1,8 @@
-function [corrVal, mouthImg, mouthCenter] = mouthDetection(cropImage, faceMask)
-corrVal = 0;
+function [mouthCenter] = mouthDetection(cropImage, faceMask)
 
 % mouth map
 subImageYCbCr = rgb2ycbcr(cropImage);
 
-im2Y = im2double(subImageYCbCr(:,:,1));
 im2Cb = im2double(subImageYCbCr(:,:,2));
 im2Cr = im2double(subImageYCbCr(:,:,3));
 
@@ -16,64 +14,57 @@ bot = ((1/chromaLength) * sum(im2Cr(:)./im2Cb(:)));
 n = 0.97 *( top./bot );
 
 %calculate mouthmask 
-mouthMap = (im2Cr.^2) .* ((im2Cr.^2) - n.*(im2Cr./im2Cb)).^2;
-mouthMap = mouthMap./max(mouthMap(:));
+mothMap = (im2Cr.^2) .* ((im2Cr.^2) - n.*(im2Cr./im2Cb)).^2;
+mothMap = mothMap./max(mothMap(:));
 
 %masking, gives the compleate mouthMap
-finalMouthMap = faceMask.* mouthMap;
+faceMask = mothMap.* faceMask;
 
 %dilation
 se2 = strel('disk', 8);
-mouthImg = imdilate(finalMouthMap, se2);
+mouthImg = imdilate(faceMask, se2);
 
 %set the over half of the img to black
-[sizeX sizeY] = size(mouthImg);
-[r c] = size(mouthMap);
+[sizeX, sizeY] = size(mouthImg);
+mouthImg(1:round(sizeX.*0.6),:) = 0;
 
 %decide how many pixels a region must have to not be erased 
-%we decided that regions that are has less than 0.23% pixels of the image will be erased (empriskt) 
-numbOfpixels = round(r*c*0.0028);
-
-assignin('base', 'mouthMap', mouthImg);
-
-for mouthIntensity = 40:-1:10
-    
-    mouthIntensity = mouthIntensity/100;
-    mouthImg(1:round(sizeX.*0.6),:) = 0;
-
-    %if the pixel value is greater than 38% set pixel value to 1 the rest is 0
-    mouthImgMask = mouthImg > mouthIntensity;
+%we decided that regions that are has less than 0.28% pixels of the image will be erased (empriskt)
+[row, col] = size(faceMask);
+minMouthArea = round(row*col*0.0028);
 
 
+for mouthIntensity = 0.4:-0.01:0.1
+
+    %if the pixel value is greater than mouthIntensity set pixel value to 1 the rest is 0
+    mouthRegion = mouthImg > mouthIntensity;
 
     %Remove small regions
     se = strel('disk',1);        
-    mouthImgMask = imerode(mouthImgMask,se);
+    mouthRegion = imerode(mouthRegion,se);
 
     se2 = strel('disk', 2);
-    mouthImgMask = imdilate(mouthImgMask, se2);
-    if(nnz(mouthImgMask) > numbOfpixels)
+    mouthRegion = imdilate(mouthRegion, se2);
+    
+    %if the white mouthRegion is greater than minMouthArea, break
+    if(nnz(mouthRegion) > minMouthArea)
         break;
     end
-    
-    %erase white regions if it contains less than numbOfpixels pixels, we only
-    %want one mouth region
 
 end
 
-%Dilate first to fill lips
-mouthImgMask = bwareaopen(mouthImgMask, numbOfpixels);
+%erase white regions if it contains less than numbOfpixels pixels, we only
+%want one mouth region
+mouthRegion = bwareaopen(mouthRegion, minMouthArea);
 
-numbOfpixels = round(numbOfpixels/70);
+minMouthArea = round(minMouthArea/70);
 
-se = strel('disk', numbOfpixels);
-mouthImgMask = imerode(imdilate(mouthImgMask, se), se);
-L = imfill(mouthImgMask, 'holes');
+se = strel('disk', minMouthArea);
+mouthRegion = imerode(imdilate(mouthRegion, se), se);
+L = imfill(mouthRegion, 'holes');
 
 
 %find mouth center
-xcentre = 1;
-ycentre = 1;
 [x, y] = meshgrid(1:size(L, 2), 1:size(L, 1));
 weightedx = x .* L;
 weightedy = y .* L;

@@ -5,11 +5,7 @@ for i = 1:16
     else
         image = imread(sprintf('images/DB1/db1_%d.jpg',i));
     end
-    
-    %resize so that every image is same size. Convert to grayscale for correct
-    %calculations
-
-    
+  
     images{i} = image;
 end
 %%
@@ -30,7 +26,7 @@ end
 for i = 1:16
         
     image = images{i};
-    im = imrotate(image, 5);
+    im = imrotate(image, -5);
     [w] = tnm034(im);
     w
 end
