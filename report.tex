@@ -9,6 +9,7 @@
 \usepackage{float}
 \usepackage{graphicx}
 \usepackage{times}
+\usepackage{nameref}
 \usepackage[swedish]{babel}
 
 \usepackage{geometry}
@@ -68,9 +69,9 @@
 
 \chapter{Sammanfattning}
 
-Den här rapporten beskriver en implementation av ansiktsigenkänning skriven i \textit{Matlab}. En godtycklig bild på ett ansikte kan skickas in i programmet och jämförs med andra bilder i en databas. För att känna igen ett ansikte måste ansiktet först separeras från andra objekt i bakgrunden. Efter det används metoder för \textit{egenansikten} för att avgöra vilken person ansiktet tillhör. Vissa enklare förvrängningar i bildens skala, rotation, ljushet och placering tas hänsyn till och kompenseras av programmet. 
+Den här rapporten beskriver en implementation av ansiktsigenkänning skriven i \textit{Matlab}. En godtycklig bild på ett ansikte skickas in i programmet och jämföras med andra bilder i en databas. För att känna igen ett ansikte måste ansiktet först separeras från andra objekt i bakgrunden. Efter det används metoden \textit{egenansikten} för att avgöra vilken person ansiktet tillhör. Förvrängningar appliceras som skalning, rotation, färgintensitet och placering, vilket programmet ska kompensera för. 
 
-Hur detta har implementerats beskrivs under metod i denna rapport. Efteråt genomgås en diskussion över hur väl denna implementation fungerar och vilka brister den har. Vår implementation klarar till exempel inte kraftigt vinklade ansikten eller stora ändringar i ansiktsuttryck.
+Hur detta har implementerats beskrivs under \nameref{metod} i denna rapport. Efteråt diskuteras resultatet och hur väl denna implementation fungerar samt vilka brister den har. Vår implementation klarar till exempel inte allt för kraftigt vinklade ansikten eller stora ändringar i ansiktsuttryck.
 
 \tableofcontents
 
@@ -78,39 +79,31 @@ Hur detta har implementerats beskrivs under metod i denna rapport. Efteråt geno
 
 \chapter{Inledning}
 
-Ansiktsigenkänning är en metod som har funnits i våra tankar sedan de första datorerna kom till \cite{history}. Trots att det inte alltid är den mest säkra metoden för att identifiera en person, så har metoden alltid varit ett populärt ämne på grund av enkelheten i identifikationen. Personen som ska identifieras behöver inte sträcka fram sitt finger eller skanna sitt öga. Med korrekt ansiktsigenkänning går det till och med att identifiera människor utan deras medvetande om saken, förutsatt att det finns kameror strategiskt utplacerade, vilket är användbart för bland annat säkerhetssystem.
+Ansiktsigenkänning är ett populärt ämne inom datorseende och används mycket inom kommunikationssystem och passagekontroller \cite{background}. Oftast går processen ut på att registrera ett ansikte på en digital bild, bearbeta ansiktet för att få fram den viktigaste informationen och jämföra den slutliga ansiktsbilden men en databas. Metoden för att upptäcka ett ansikte och sedan hitta rätt ansikte i databasen är långt ifrån enkel att tillämpa då det finns en rad olika faktorer som påverkar resultatet.
+
 
 
 \chapter{Bakgrund}
 
-För att känna igen ett ansikte krävs en databas över vilka ansikten som är kopplade till vilken person. Den här rapporten syftar till att beskriva tillvägagångsättet för utvecklingen av ett ansiktsigenkänningsystem utgående från en databas på 16 personer, med en bild på varje person.
+För att känna igen ett ansikte krävs en databas över vilka ansikten som är kopplade till vilken person. Syftet med den här rapporten är att beskriva tillvägagångsättet för utvecklingen av ett ansiktsigenkänningsystem som utgår från en databas med en mängd olika bilder tagna på 16 olika personer.
 
-Utveckligen skedde i Matlab med kravet att ett porträtt på ett ansikte skulle kunna skickas in i en funktion som sedan skulle returnera databas-id på personen beroende på om personen tillhör databasen eller inte. Programmet måste vara någorlunda stabilt och kunna känna igen ansikten som har blivit roterade (+/- 5 grader), skalade (+/- 10 \%), translaterade eller förvrängda färgmässigt (+/- 30 \%).
+Utvecklingen skedde i Matlab med kravet att ett porträtt skulle läsas in i ett program som sedan skulle returnera ett databas-id på personen, beroende på om personen tillhör databasen eller inte. Programmet skulle vara någorlunda stabilt och kunna känna igen ansikten som har blivit roterade \newline ($\pm$ 5 \% grader), skalade ($\pm$ 10 \%), translaterade eller om bildens tonvärden blivit förvrängda ($\pm$ 30 \%).
 
 \chapter{Metod}
-
-Här beskrivs tillvägagångssättet för implementation av systemet. Under ansiktsigenkänningen sker först en ljuskorrigering som förenklar framtagandet av ansiktsmasken, som i sin tur används för att plocka fram en munmask samt en ögonmask. Efter det används egenansikten för att avgöra vilken person ansiktet tillhör.
+\label{metod}
+Här beskrivs tillvägagångssättet för implementation av systemet. Under ansiktsigenkänningen sker först en ljuskorrigering som förenklar framtagandet av ansiktsmasken, som i sin tur används för att plocka fram en \textit{munmask} samt en \textit{ögonmask}. Efter det används egenansikten för att avgöra vilken person ansiktet tillhör.
 
 \section{Övergripande struktur}
 
-Projektet är skrivet i Matlab och funkionaliteten är uppdelad i ett antal filer. De flesta funktioner är egenskrivna medan andra är hämtade från fria källor på internet. För själva igenkänningen används så kallade egenansikten. Innan programmet körs förebereds bilddatabasen genom att generera egenansikten i funktionen initDB. Detta görs i ett förberäkningspass eftersom det skulle ta för lång tid att räkna ut annars.
+Programmets funktionalitet är uppdelad i ett antal filer. De flesta funktioner är egenskrivna medan andra är hämtade från fria källor på internet. För igenkänningen används så kallade egenansikten. Innan programmet körs förebereds bilddatabasen genom att generera egenansikten i funktionen \textit{initDB}. Detta görs i ett förberäkningspass eftersom det skulle ta för lång tid att räkna ut annars.
 
 Efter att funktionen \textit{initDB} körts så sparas en \textit{.mat}-fil med de relevanta vikterna för att göra jämförelserna som behövs. När funktionen \textit{tnm034} körs skickas en bild in och returnerar vilken person bilden föreställer, förutsatt att den hittas i databasen. \textit{tnm034} använder funktionerna \textit{faceDetection} och \textit{compareToDB} för att upptäcka ansiktsområden samt jämföra dessa med databasen.
 
 \section{Ljuskorrigering}
 
-Foton som tagits med olika förutsättningar som exempelvis olika kameror,belysning eller slutartid kommer att resultera i bilder med olika färgtemperaturer. Det är viktigt i bildanalyssammanhang att alla bilder har samma relativa färgnyans eftersom jämförelser mellan olika bilders färger kommer utföras.
+Foton som tagits med olika förutsättningar som exempelvis olika kameror, belysning eller slutartid kommer att resultera i bilder med olika färgtemperaturer. Det är viktigt i bildanalyssammanhang att alla bilder har samma relativa färgnyans eftersom jämförelser mellan olika bilders färger kommer utföras.
 
-Nyansskillnaderna kan korrigeras via en process som kallas för vitbalans. Det finns flera olika metoder för vitbalans, men i detta projektet användes en metod baserad på linjär skalning av bildens färgkanaler. Se figur \ref{fig:whitebalance} 
-
-
-%\begin{figure}[!ht]
-%  \centering
-%      \includegraphics[width=0.8\textwidth]{whitebalace.png}
-%  \caption{Ljuskorrigerad bild enligt funktionen whiteBalance \cite{whitebalance}}
-%  \label{fig:whitebalance}
-%\end{figure}
-
+Nyansskillnaderna kan korrigeras via en process som kallas för \textit{vitbalans}. Det finns flera olika metoder för vitbalans, men i detta projektet användes en metod baserad på linjär skalning av bildens färgkanaler \cite{whitebalance}.
 
 \begin{figure}[h]
     \centering
@@ -127,54 +120,67 @@ Nyansskillnaderna kan korrigeras via en process som kallas för vitbalans. Det f
         \label{fig:whitebalance_2}
     \end{subfigure}
 
-    \caption{Ljuskorrigering enligt funktionen whiteBalance \cite{whitebalance} }
+    \caption{Ljuskorrigering enligt funktionen \textit{whiteBalance} }
     \label{fig:whitebalance}
 \end{figure}
 
 
-Ett medelvärde för alla pixlar i bilden beräknas för varje färgkanal (i detta fall röd, grön och blå). Dessa medelvärden divideras med medelvärdet av bildens gråvärden, \textit{I}. På det sättet kan en skalfaktor för varje färgkanal bestämmas, se ekv. \ref{white_balance}. Om skalfaktorerna appliceras på ursprungsbilden kommer dess färgvärden bli neutrala i alla färgkanaler.
+Ett medelvärde för alla pixlar i bilden beräknas för varje färgkanal (i detta fall röd, grön och blå). Dessa medelvärden divideras med medelvärdet av bildens gråvärden, \textit{I}. På så sätt kan en skalfaktor för varje färgkanal bestämmas, se ekv. \ref{white_balance}. Om skalfaktorerna appliceras på ursprungsbilden kommer dess färgvärden bli neutrala i alla färgkanaler.
 
 \begin{equation} \label{white_balance}
 [S_{r},S_{g},S_{b}] = \frac{ [r,g,b] }{ \overline{I} }
 \end{equation}
 
-\section{Detektion av hud}
-Syftet med huddetektion är att skapa en så kallad hudmap där all hud ska vara vit och allt övrigt ska vara svart. Detta gör att ansiktet kan identifieras och att en mask för ansiktet kan märkas ut. För att skapa hudmappen konverteras den vitbalanserade bilden till färgrymden YCbCr. Varje värde från Cb och Cr-kanalerna jämförs med ett särskilt färgintervall som ska representera hud. Om krominansvärdet ligger inom intervallet sparas positionen för pixelen i hudmappen. En svart bild skapas som är lika stor som orginalbilden och med hjälp av pixelvärdenas positionerna sätts pixelvärdena i den svarta bilden som har samma positoner till ett. Alltså kommer alla område som har identifierats som hud vara vitt och resten vara svart, se figur \ref{fig:firstSkinmask}.
+\section{Hudidentifiering}
+Syftet med hudidentifiering är att skapa en så kallad \textit{hudmask} där all hud ska vara vit och allt övrigt ska vara svart. Detta leder till att ansiktet kan maskeras och blir lättare att identifiera. För att skapa hudmasken konverteras den vitbalanserade bilden till färgrymden YCbCr \cite{FDiCI}. Varje värde från Cb och Cr-kanalerna jämförs med ett särskilt färgintervall som ska representera hud. Om krominansvärdena ligger inom intervallet sparas positionen för pixelen i en matris. En helt svart bild skapas som är lika stor som orginalbilden och med hjälp av positioner (från matrisen) sätts pixelvärdena i den svarta bilden till 1. Alltså kommer alla område som har identifierats som hud vara vitt och resten vara svart, se figur \ref{fig:firstSkinmask}. En brusreducering görs med morfologiska operationer vilket kommer göra det lättare att maskera ansiktet, se figur \ref{fig:reducedMask}   
 
-Om det finns områden i bilden som inte är hud men har en färg som ligger inom hudintervallet kommer även dessa område kännas igen som hud och sättas till vitt. Därför måste dessa områden maskeras bort för att ansiktet ska kunna identifieras. Små områden i form av “öar” tas bort med hjälp av en funktionen “bwareaopen” som tar bort alla vita områden som har en area som är mindre än 3.3 procent av bilden, se figur \ref{fig:3,3precentRemoved}. En brusreducering utförs genom att först utföra en erodering på vita område och sedan förstora dessa område med dilation, se figur \ref{fig:erodePlusDilation}.
+Om det finns områden i bilden som inte är hud men har en färg som ligger inom hudintervallet kommer även dessa område identifieras som hud och sättas till vitt. Därför måste dessa områden maskeras bort för att ansiktet ska kunna identifieras. Små områden i form av “öar” tas bort med hjälp av matlabfunktionen $\mathtt{bwareaopen}$ som tar bort alla vita områden som har en area som är mindre än 3.3 \% av bildens area, se figur \ref{fig:3,3precentRemoved}. En ny brusreducering utförs genom att först utföra en erodering på vita områden och sedan förstora dessa område med dilation, se figur \ref{fig:erodePlusDilation}.
 
 
 \begin{figure}[h]
     \centering
-    \begin{subfigure}[b]{0.3\textwidth}
-        \includegraphics[width=\textwidth]{firstSkinmask.png}
-        \caption{SkinMask}
+    \begin{subfigure}[b]{0.22\textwidth}
+        \includegraphics[trim={3cm 0 3cm 1cm},clip,width=\textwidth]{facemask.png}
+        \caption{Första hudmasken \break}
         \label{fig:firstSkinmask}
     \end{subfigure}
-    ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
-      %(or a blank line to force the subfigure onto a new line)
-    \begin{subfigure}[b]{0.3\textwidth}
-        \includegraphics[width=\textwidth]{3,3precentRemoved.png}
+    ~ 
+    \begin{subfigure}[b]{0.22\textwidth}
+        \includegraphics[trim={3cm 0 3cm 1cm},clip,width=\textwidth]{firstSkinmask.png}
+        \caption{Brusreducerad hudmask}
+        \label{fig:reducedMask}
+    \end{subfigure}
+    ~ 
+    \begin{subfigure}[b]{0.22\textwidth}
+        \includegraphics[trim={3cm 0 3cm 01cm},clip,width=\textwidth]{3,3precentRemoved.png}
         \caption{Borttagning av vita regioner}
         \label{fig:3,3precentRemoved}
     \end{subfigure}
-    ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
-    %(or a blank line to force the subfigure onto a new line)
-    \begin{subfigure}[b]{0.3\textwidth}
-        \includegraphics[width=\textwidth]{erodePlusDilation.png}
+    ~ 
+    \begin{subfigure}[b]{0.22\textwidth}
+        \includegraphics[trim={3cm 0 3cm 1cm},clip,width=\textwidth]{erodePlusDilation.png}
         \caption{Erodering och dilation}
         \label{fig:erodePlusDilation}
     \end{subfigure}
     \caption{Ansiktsmaskering}\label{fig:binaryImages}
 \end{figure}
+ 
 
+Om en bild skulle innehålla flera ansikten måste detta undersökas, dvs varje vitt område i hudmasken måste kontrolleras om det är ett ansikte eller inte. Det bestämdes att ansikten vars area är mindre än 2 \% av totala bildarean inte kommer att bearbetas. För att identifiera potentiella ansikten används matlabfunktionen $\mathtt{regionprops(image,'BoundingBox')}$ \cite{regionprops}. Denna funktion returnerar den minsta rektangeln som kan innehålla ett antal vita regioner, se fig \ref{fig:boundBox}. Om rektangelns area är större än 2 \% av bildens area beskärs den inlästa bilden efter rektangelns position och storlek. Den beskurna bilden kommer i detta skede representera en färgbild med ett identifierat ansikte. Samma procedur för att identifiera hud och filtrera bor vita område som gjordes i början utförs på den beskurna bilden för att beräkna en ny ansiktsmask.
 
-Om en bild skulle innehålla flera ansikten måste detta undersökas, dvs varje vitt område i hudmappen måste kontrolleras om det är ett ansikte eller inte. Det bestämdes att ansikten vars area är mindre än 2 procent av totala bildarean inte kommer att bearbetas. För att identifiera potentiella ansikten används funktionen regionprops(image,'BoundingBox'). Denna funktion returnerar den minsta rektangeln som kan innehålla alla vita reioner, se fig \ref{fig:boundBox}. Om rektangelns area är större än 2 procent av bildens area beskärs den inlästa bilden efter rektangelns position och storlek. Den beskurna bilden kommer i detta skede representera en färgbild med ett identifierat ansikte. Samma procedur för att identifiera hud och filtrera bor vita område som gjordes i början utförs på den beskurna bilden för att beräkna en ny ansiktsmask.
+Det finns bilder som har tagits med för hög eller för låg exponering vilket gör att hudfärgen på bilden blir förvrängd och hamnar utanför hudfärgsområdet när hudindetifieringen beräknas. Det leder till att det kan bli stora svarta partier i den slutliga ansiktsmasken, se figur \ref{fig:faceMaskCrop}. Lösningen på att fylla ut ansiktsmasken gjordes genom en funktion som heter \textit{FitElipse}. FitElipse använder minsta kvadratmetoden för att uppskatta en ellips baserat på den vita regionen i  ansiktsmasken \cite{fitEllipse}. 
 
-Det finns bilder som har tagits med för hög eller för låg exponering vilket gör att hudfärgen på bilden blir förvrängd och hamnar utanför hudfärgsområdet när huddetektionen beräknas. Det leder till att det kan bli stor svarta partier i den slutliga ansiktsmasken, se figur \ref{fig:faceMaskCrop}. Lösningen på att fylla ut ansiktsmasken gjordes genom en funktion som heter \textit{FitElipse}. \textit{FitElipse} använder minsta kvadratmetoden för att uppskatta en ellips baserat på den vita regionen i faceMasken \ref{fig:faceMaskCrop}. 
+För att beräkna ellipsens koefficienter $a$ och $b$ och centrumpunkten $(h,k)$, se ekvation \ref{eq:ellipsenEkv}, utgår funktionen från en kvadratisk ekvation enligt ekvation \ref{eq:algebraiskEkv} där $\textbf{x}$ är koordinaterna för den vita regionen i ansiktsmasken. Genom att införa ett koordinatbyte i ekvation \ref{eq:algebraiskEkv} kan $a$, $b$ och centrumpunktens koordinater lösas ut och därefter kan ellipsen beräknas med ellipsens ekvation \ref{eq:ellipsenEkv}.
 
-För att beräkna ellipsens koefficienter a och b och centrumpunkt utgår funktionen från en kvadratisk ekvation enligt ekv [1] där x är koordinaterna för den vita regionen i masken. Genom att införa ett koordinatbyte i ekvation \ref{X} kan a, b och centrumpunktens koordinater lösas ut och där efter kan ellipsen beräknas med ellipsens ekvation[källa]. Ellipsens centrum kommer att ligga i maskens centroid eftersom dessa två punkter adderas. Eftersom masken kan innehålla vita regioner som genererats från bakgrunden som har liknat hud, ersätts masken med ellipsen då den endast kommer täcka upp ansiktets område, se se fig. \ref{fig:elipseMask}. Ifall ellipsen skulle bli för liten dileras den för att försäkra att ögon och mun hamnar innan för ellipsen.
-Till sist skickas den beskurna färgbilden och ellipsmasken till \textit{mouthDetection}-funktionen.
+\begin{equation} \label{eq:ellipsenEkv}
+   \frac{(x-h)^2}{a^2}+\frac{(y-k)^2}{b^2}=1
+\end{equation}
+
+\begin{equation} \label{eq:algebraiskEkv}
+   \mathrm{ \textbf{x}^TA\textbf{x} + b^T\textbf{x} + c = 0}
+\end{equation}
+
+Ellipsens centrum kommer att ligga i ansiktsmaskens centroid \cite{centroid} eftersom dessa två punkter adderas. Eftersom masken kan innehålla vita regioner som genererats från bakgrunden som har liknat hud, ersätts masken med ellipsen då den endast kommer täcka upp ansiktets område, se fig. \ref{fig:elipseMask}. Ifall ellipsen skulle bli för liten dileras den för att försäkra att ögon och mun hamnar innanför ellipsen. Till sist skickas den beskurna färgbilden och ellipsmasken till \textit{mouthDetection}-funktionen.
 
 \begin{figure}[h]
     \centering
@@ -183,77 +189,66 @@ Till sist skickas den beskurna färgbilden och ellipsmasken till \textit{mouthDe
         \caption{Identifierade ansikten}
         \label{fig:boundBox}
     \end{subfigure}
-    ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
-      %(or a blank line to force the subfigure onto a new line)
+    ~ 
     \begin{subfigure}[b]{0.3\textwidth}
         \includegraphics[width=\textwidth]{faceMaskCrop.jpg}
         \caption{Beskuren faceMask}
         \label{fig:faceMaskCrop}
     \end{subfigure}
-    ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
-    %(or a blank line to force the subfigure onto a new line)
+    ~ 
     \begin{subfigure}[b]{0.3\textwidth}
         \includegraphics[width=\textwidth]{elipseMask.jpg}
         \caption{Maskerad ellips}
         \label{fig:elipseMask}
     \end{subfigure}
-    \caption{Beskäring}\label{fig:yolo}
+    \caption{Beskärning}\label{fig:yolo}
 \end{figure}
 
 \section{Framtagande av munmask}
 
-Efter att bilden har beskurits blir det lättare att identifiera munnen eftersom bakgrunden har klippts bort. För att hitta munnens område utnyttjar man att detta område kommer ha en rödare nyans jämfört med resten av bilden. Alltså kommer Cr kanalen ha ett betydligt större värde än Cb kanalen. Med hjälp av ekvation \ref{mouthmap} beräknas skillnaden mellan bildens rödaste regioner och bildens minst röda regioner (Cr/Cb). Här står n för bildens totala antal pixlar. Resultatet blir en svartvit munmask, där mun-området bör ha den högsta ljus-intensiteten. Denna bild motsvarar den vänstra bilden i figur \ref{fig:mouthmap}.
+För att hitta munnens område utnyttjar man att ett område innanför ellipsen kommer ha en rödare nyans jämfört med resten av bilden \cite{FDiCI}. Alltså kommer \textit{Cr}-kanalen ha ett betydligt större värde än \textit{Cb}-kanalen. Med hjälp av ekvation \ref{eq:mouthmap} beräknas skillnaden mellan bildens rödaste regioner och bildens minst röda regioner (\textit{Cr}/\textit{Cb}). Här motsvarar $n$ bildens totala antal pixlar enligt ekvation \ref{eq:mouthmap_eta}. Resultatet blir en gråskalebild där munområdet bör ha den högsta ljus-intensiteten. Denna bild visas i figur \ref{fig:mouthmap_1}.
 
-\begin{equation} \label{mouthmap}
+\begin{equation} \label{eq:mouthmap}
 mouthMap = Cr^2 \cdot (Cr^2 - \eta \cdot \frac{Cr}{Cb})^2
 \end{equation}
 
-\begin{equation} \label{mouthmap_eta}
+\begin{equation} \label{eq:mouthmap_eta}
 \eta = 0.95 \cdot \frac{\frac{1}{n} \sum Cr^2}{\frac{1}{n} \sum \frac{Cr}{Cb}} 
 \end{equation}
 
-För att förtydliga munnen utförs morfologiska operationer på munmasken och multipliceras med ansiktsmasken för att svarta ut området runtom ansiktet ifall att det skulle finnas bakgrunds-regioner med lika hög intensitet (vita regioner) som munnen. Det finns vissa bilder som kan generera vita regioner i ansiktet som inte tillhör munnen. Dessa regioner maskeras bort genom att sätta alla pixelvärde till noll som ligger inom 56 procent av bildmatrisens rader (från håret och nedåt). munmasken trösklas sedan för att få en binär bild. Element som har intensitetvärden som är högre än 0.28 sätts till ett, resten blir svart. Trots trösklingen och maskeringen kan det fortfarande finnas oönskade vita regioner kvar, till exempel att munnen består av många små vita regioner eller att näsan har bidragit. Målet är att det bara ska finnas en vit region som representerar munnens område, därför behöver ytterligare en filtrering göras. Detta görs genom att svarta ut alla vita regioner som består av ett antal pixlar som är mindre än 23 procent av mouthMapens totala storlek. För att få en sammanhängande vit region för munnen körs funktionen imFill ifall att det skulle finnas ett svart hål. Det sista som görs är att beräkna koordinaterna för centrumpunkten i den vita regionen och skicka dem till funktionen eyeDetection.
 
+För att ta bort övriga högintensitetområden som kan ha bidragit från bakgrunden multipliceras munmappen med ansiktsmasken. Högintensitetsområden som finns kvar utvidgas för att förtydliga munnens region. Via en loop trösklas varje intensitet i den nya munmasken (från 0.4 till 0.1) tills munnen har en area som är minst 0.28 \% (minsta munarea) av munmaskens pixelarea . I loopen sätts först alla pixelvärden till 0 som ligger nedanför 60 \% av bildens höjd, se bild \ref{fig:mouthmap_2}, därefter görs trösklingen med loopens aktuella tröskelvärde, erodering och dilation utförs. Till sist jämförs summan av alla nollskilda pixlar från munmasken med minsta munarean. Om antalet nollskilda pixlar är större än minsta munarean bryts loopen.  
 
-\begin{figure}[h]
-    \centering
-    \begin{subfigure}[b]{0.4\textwidth}
-        \includegraphics[width=\textwidth]{whitebalance_1.png}
-        \caption{Original bild.}
-        \label{fig:whitebalance_1}
-    \end{subfigure}
-    ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
-      %(or a blank line to force the subfigure onto a new line)
-    \begin{subfigure}[b]{0.4\textwidth}
-        \includegraphics[width=\textwidth]{whitebalance_2.png}
-        \caption{Vitbalanserad bild}
-        \label{fig:whitebalance_2}
-    \end{subfigure}
-
-    \caption{Pictures of animals}\label{fig:whitebalance}
-\end{figure}
-
+Trots trösklingen och maskeringen kan det fortfarande finnas oönskade vita regioner kvar, till exempel att munnen består av många små vita regioner eller att näsan har bidragit till masken. Målet är att det bara ska finnas en vit region som representerar munnens område, därför behöver ytterligare en filtrering göras. Detta görs genom att ta bort regioner som är mindre eller lika med minsta munarean. För att få en sammanhängande vit region för munnen körs funktionen $\mathtt{imFill}$ ifall det skulle finnas ett svart hål i den ''vita'' munnen vilket slutligen ger figur \ref{fig:mouthmap_3}. Det sista som görs är att beräkna koordinaterna för centrumpunkten i den vita regionen och skicka dem till funktionen \textit{eyeDetection}.
 
 \begin{figure}[h]
     \centering
-    \begin{subfigure}[b]{0.4\textwidth}
+    \begin{subfigure}[b]{0.25\textwidth}
         \includegraphics[width=\textwidth]{mouthmap_1.png}
-        \caption{Munmask i gråskala}
+        \caption{Munmmap i gråskala \break}
         \label{fig:mouthmap_1}
     \end{subfigure}
     ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
       %(or a blank line to force the subfigure onto a new line)
-    \begin{subfigure}[b]{0.4\textwidth}
-        \includegraphics[width=\textwidth]{mouthmap_2.png}
-        \caption{Munmask efter dilation och tröskling}
+    \begin{subfigure}[b]{0.25\textwidth}
+        \includegraphics[width=\textwidth]{mouthmap_3.png}
+        \caption{60\% av munmaskens övre del har svartas ut}
         \label{fig:mouthmap_2}
     \end{subfigure}
-    \caption{Munmasken räknas först ut genom ekvation \ref{mouthmap} (vänstra bilden). Sedan används ett tröskelvärde för att få ut bilden till höger. I detta fall kom en bit av hakan med.}\label{fig:mouthmap}
+    ~%add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.25\textwidth}
+        \includegraphics[width=\textwidth]{mouthmap_2.png}
+        \caption{Munmask efter dilation och tröskling}
+        \label{fig:mouthmap_3}
+    \end{subfigure}
+    \caption{Berarbetning av munmasken}\label{fig:mouthmap}
 \end{figure}
+
 
 \section{Framtagande av ögonmask}
 
-För att upptäcka ögon i ansiktet så används en metod som först gör om bilden till färgrymden YCbCr för att sedan räkna ut två eyemaps, en krominans map och en luminans map enligt Rein-Lien Hsu:s metod (referens: Face Detection in Color Images). Dessa räknas ut enligt ekvationer \ref{eyemapc} och \ref{eyemapl}. Figur \ref{fig:eyemap} a och b visar hur dessa kan se ut i en typiskt färgbild.
+För att upptäcka ögon i ansiktet så används en metod som först gör om bilden till färgrymden YCbCr för att sedan räkna ut två ögonmasker, en krominansmap och en luminansmap enligt Rein-Lien Hsu:s metod \cite{FDiCI}. Luminansmap och krominansmap räknas ut enligt ekvationer \ref{eyemapc} och \ref{eyemapl}. Figur \ref{fig:eye_image_1} och \ref{fig:eye_image_2} visar hur dessa kan se ut i en typisk färgbild.
 
 
 \begin{equation} \label{eyemapc}
@@ -265,20 +260,45 @@ EyeMapL = \frac{Y \textcircled{+} G}{Y \textcircled{-} G + 1}
 \end{equation}
 
 
-Den slutgiltiga ögonmasken fås sedan när dessa två lägges ihop. Då erhålls en eyemap i gråskala där ögonområdena bör ha högst intensitet av alla bildens pixlar. Eftersom ögonens intensitet kan variera mellan bilder testas olika tröskelvärden, från 100 procent intensitet och nedåt, tills två ögon har hittat.
+Den slutgiltiga ögonmasken fås när ansiktsmasken, luminansmappen och krominansmappen multipliceras med varandra, se figur \ref{fig:eye_image_3}. Då erhålls en ögonmask i gråskala där ögonområdena bör ha högst intensitet av alla bildens pixlar. Eftersom ögonens intensitet kan variera mellan bilder testas olika tröskelvärden, från 100 \% intensitet och nedåt, tills två ögon har hittats, se figur \ref{fig:eye_image_4}. För att ytterligare öka chansen att hitta korrekta ögonpunkter så konstruerades ytterligare en mask för att begränsa sökområdet. Det är på grund av denna mask som ögat "klipps" i figur \ref{fig:eye_image_4}.
 
-Ibland kan det hända att algoritmen hittar fler än två ögon trots vår låga tröskelförändring. I det fallet körs vissa tester på ögonen för att avgöra vilka två som är de korrekta. Exempelvis vet vi att ögonen måste vara på varsin sida om ansiktet. Om två möjliga ögon är väldigt nära varandra så sättes dessa ihop dem till ett och jämför med det nya ögat istället.
+Ibland kan det hända att algoritmen hittar fler än två ögon trots den låga tröskelförändringen. I det fallet körs vissa tester på ögonen för att avgöra vilka två som är de korrekta. Exempelvis vet vi att ögonen måste vara på varsin sida om ansiktet. Om två möjliga ögon är väldigt nära varandra så slås dessa områden ihop till ett och jämförelse sker med det nya ögat istället.
 
-\begin{figure}[!ht]
-  \centering
-      \includegraphics[width=0.8\textwidth]{eye_image.png}
-  \caption{De olika stegen för ögonigenkänning. Här har ena ögat i d klippts av lite på grund av att ansiktsmasken läggs över bilden. Detta är oftast inga problem då vi fortfarande har ögon positionen.}
-  \label{fig:eyemap}
+\begin{figure}[h]
+    \centering
+    \begin{subfigure}[b]{0.2\textwidth}
+        \includegraphics[width=\textwidth]{eye_image_1.png}
+        \caption{Krominans bild med histeq \break}
+        \label{fig:eye_image_1}
+    \end{subfigure}
+    ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.2\textwidth}
+        \includegraphics[width=\textwidth]{eye_image_2.png}
+        \caption{Normaliserad luminans bild \break}
+        \label{fig:eye_image_2}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[b]{0.2\textwidth}
+        \includegraphics[width=\textwidth]{eye_image_3.png}
+        \caption{Kombinerad ögonmask med dilation och ansiktsmask på}
+        \label{fig:eye_image_3}
+    \end{subfigure}
+     ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
+      %(or a blank line to force the subfigure onto a new line)
+    \begin{subfigure}[b]{0.2\textwidth}
+        \includegraphics[width=\textwidth]{eye_image_4.png}
+        \caption{Slutgiltig ögonmask efter tröskling \break}
+        \label{fig:eye_image_4}
+    \end{subfigure}
+    
+    \caption{Ögonmasken beräknas i flera steg.}
+    \label{fig:eyemap}
 \end{figure}
 
 \section{Rotation}
 
-Efter att munnen och ögonen har hittats så skickas deras positioner in i funktionen \textit{triangulateFace} som har som uppgift att räkna ut vilken vinkel som behövs för att rotera bilden så att ögonen ligger längs med den horisontella axeln. Detta görs genom beräkna skalärprodukten mellan en normaliserad vektor från vänster öga till höger öga och horistontalaxeln enligt ekvation \ref{angle}.
+Efter att munnen och ögonen har hittats så skickas deras positioner in i funktionen \textit{triangulateFace} som har som uppgift att räkna ut vilken vinkel som behövs för att rotera bilden så att ögonen ligger längs med den horisontella axeln. Detta görs genom att beräkna skalärprodukten mellan en normaliserad vektor från vänster öga till höger öga och horistontalaxeln enligt ekvation \ref{angle}.
 
 \begin{equation} \label{angle}
 \cos(\alpha) = \widehat{v} \cdot \widehat{x}
@@ -286,24 +306,37 @@ Efter att munnen och ögonen har hittats så skickas deras positioner in i funkt
 
 
 
-Bilden roteras därmed tillbaka med den funna vinkeln. En ny upprätad bild tas då fram med hjälp av bikubisk interpolation. 
+Bilden roteras därmed tillbaka med den funna vinkeln. En ny upprätad bild tas då fram med hjälp av bi-kubisk interpolation. 
 
 \section{Ljusintensitetskorrigering}
 
-För att hantera att bilderna kunde ha olika ljusintensitet så koverterades bilden till färgrymden YCbCr och sedan användes matlabfunktionen \textit{histeq} för att normalisera bildernas luminanskanal \ref{fig:luminance}. 
+För att hantera att bilderna kunde ha olika ljusintensitet så konverterades bilden till färgrymden YCbCr och sedan användes matlabfunktionen $\mathtt{histeq}$ för att normalisera bildernas luminanskanal, se figur \ref{fig:luminanceSub} och \ref{fig:luminanceNormal}. 
 
-\begin{figure}[!ht]
+\begin{figure}[h]
   \centering
-   \includegraphics[width=0.4\textwidth]{lunimance.jpg} 
-   \includegraphics[width=0.4\textwidth]{luminance_normalized.jpg}  
-   \caption{Genom att normalisera luminansen så får bilden en högre kontrast och därigenom flera specifika igenkänningspunkter.}
-   \label{fig:luminance}
+
+   \begin{subfigure}[b]{0.4\textwidth}
+        \includegraphics[width=\textwidth]{lunimance.jpg}
+        \caption{Orginalbild}
+        \label{fig:luminanceSub}
+    \end{subfigure}
+    ~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc. 
+      %(or a blank line to force the subfigure onto a new line)
+     \begin{subfigure}[b]{0.4\textwidth}
+        \includegraphics[width=\textwidth]{luminance_normalized.jpg}
+        \caption{Bild med normaliserad luminans kanal}
+        \label{fig:luminanceNormal}
+    \end{subfigure}
+    
+    
+    \caption{Genom att normalisera luminansen så får bilden en högre kontrast.}
+    \label{fig:luminance}
 \end{figure}
 
 
 \section{Egenansikten}
 
-Ett \textit{egenansikte} (eng. eigenface) är ett standardansikte som skapats utifrån flera ansikten i en databas och kan användas för jämförelser mellan ansikten. Med tillräckligt många bilder i databasen kan ett tillräckligt precist standardansikte tas fram, som innehåller ett typiskt ansiktes viktigaste egenskaper.
+Ett \textit{egenansikte} (eng. eigenface) är ett standardansikte som skapats utifrån flera ansikten i en databas och kan användas för jämförelser mellan ansikten \cite{eigenface}. Med tillräckligt många bilder i databasen kan ett tillräckligt precist standardansikte tas fram, som innehåller ett typiskt ansiktes viktigaste egenskaper.
 
 Denna databas skapas genom att \textit{PCA} (principialkomponentanalys) utförs på alla bilder i databasen och en serie egenvärden för varje ansikte beräknas. Dessa egenvärden utgör en minimalistisk representation av respektive ansikte och fångar dess viktigaste egenskaper. Egenvärden för nya ansikten kan beräknas med samma metod och jämförs med databasens egenvärden för att hitta det ansiktet som är mest likt den nya bilden.
 
@@ -311,18 +344,22 @@ Denna databas skapas genom att \textit{PCA} (principialkomponentanalys) utförs 
 
 Alla bilder läses in i databasen och vitbalanseras. För att bilderna ska kunna jämföras skalas de om till samma storlek, vilket gör jämförelseprocessen skalningsinvariant. För att få fram de karaktäristiska komponenterna för ett ansikte subtraheras varje ansikte med medelvärdet utav alla ansikten.
 
-Nästa steg är att beräkna alla egenvärden och egenvektorer för varje bild. Detta görs utifrån kovariansen av alla ansikten. Det karaktäristiska drag som är intressant för varje komponent är de med stor varians. I detta projekt tas de 16 högsta egenvärdena ut för varje ansikte. Dessa kallas för vikter och representerar ansiktets huvudsakliga egenskaper.
+Nästa steg är att beräkna alla egenvärden och egenvektorer för varje bild. Detta görs utifrån kovariansen av alla ansikten. Det karaktäristiska drag som är intressant för varje komponent är de med stor varians. Antal egenvärden kommer bli samma som antalet bilder i databasen. Efter PCA så kommer de relevanta egenvärdena ha minskat och dessa används sedan som våra vikter vid mätning av likheten på vår testbild.
 
-Databasen med de ursprungliga bilderna ifrån databasen beräknas i det här projektet i ett förpass och sparas i en .mat-fil. Detta är för att snabba upp jämförelseprocessen, eftersom det ofta blir långa beräkningstider för att skapa databasen med egenansikten.
+Databasen med de ursprungliga bilderna ifrån databasen beräknas i ett förpass och sparas i en \textit{.mat}-fil. Detta är för att snabba upp jämförelseprocessen, eftersom det ofta blir långa beräkningstider för att skapa databasen med egenansikten.
 
 \subsection{Jämförelse mellan databas och nytt ansikte}
 
 Efter att databasen med egenansikten har tagits fram kan denna användas för att jämföra nya ansiktsbilder med databasen. Den nya bildens vikter beräknas på samma sätt som för ansikten i databasen. De euklidiska avstånden mellan den nya bildens vikter och de ifrån databasen jämförs. Det minsta avståndet ger det ansiktet i databasen som är mest likt det nya ansiktet. Ifall skillnaden mellan dessa skulle vara mindre än ett givet tröskelvärde stämmer ansiktsbilderna tillräckligt bra överens med varandra för att säkerställa att de visar samma person.
 
 \chapter{Resultat}
-Resultatet är bra för bilder med enklare bakgrund. Det kan dock skilja sig avsevärt beroende på vilka förvrängningar som har applicerats på bilden. Exempelvis så kan en rotation ge en avsevärt förändrad ansiktsmask vilket i sin tur ändrar hur den slutgiltiga klippningen av bilden blir.  
-Kavet med att systemet ska vara stabilt är uppfyllda för fleratalet av bilderna. Det finns flera anledningar till att det händer, exempelvis så baserar sig rotationen på ögonpositioner och om då fel ögon hittas så kommer bilden att kompensionsroteras fel. 
+Resultatet fungerar väl för bilder med enklare bakgrund. Det kan dock skilja sig avsevärt beroende på vilka förvrängningar som har applicerats på bilden. Exempelvis så kan en rotation ge en avsevärt förändrad ansiktsmask vilket i sin tur ändrar hur den slutgiltiga beskärningen av bilden blir.  
+Kravet med att systemet ska vara stabilt är uppfyllda för fleratalet av bilderna. 
 
+Tabell \ref{table:results} är baserad på en databas med 16 bilder som har transformerats på olika sätt och sedan jämförts med vår databas. En intressant egenskap som framkom under tester är att metoden som används inte ger några falska positiva resultat, det vill säga att en person skulle identifieras som någon annan, under genomförda tester. Andelen falska negativa resultat är i de flesta fall relativt låg, det är främst vid nedskalning av bilden som det uppstår problem.
+
+\begin{table}[h]
+\caption{Tabell över hur bilderna i DB1 lyckas}
 \begin{center}
     \begin{tabular}{ | l | l | l | p{5cm} |}
     \hline
@@ -331,38 +368,60 @@ Kavet med att systemet ska vara stabilt är uppfyllda för fleratalet av bildern
     -$5\,^{\circ}$      & 0\%      & 18.75\%       & 81.25\%  \\ \hline
 
     Ljusförvrängning & - & - & - \\ \hline
-    +30 & 0\%   & 18.75\%            & 81.25\%  \\ \hline
+    +30 & 0\%   & 18.75\%         & 81.25\%  \\ \hline
     -30 & 0\%   & 25\%            & 75.00\%  \\ \hline
 
     Skalning & - & - & - \\ \hline
     +10\% & 0\%   & 6.25\%            & 93.75\%  \\ \hline
-    -10\% & 0\%   & 50\%            & 50.00\%  \\ \hline
-    \end{tabular
+    -10\% & 0\%   & 50.00\%            & 50.00\%  \\ \hline
+    \end{tabular}
     \label{table:results}
-    \caption{Tabell över hur bilderna lyckas}
 \end{center}
-
-
+\end{table}
 
 
 \chapter{Diskussion}
 
-Förklara varför allt gått åt helvete! Force push.
+Det var svårt att få programmet till att returnera bra resultat för alla bilder i databasen. Ansikten med mycket bakgrund var svårast att känna igen eftersom \textit{skinDetection}-funktionen kan hitta ansikten i bakgrunden där det egentligen inte finns några. Lösningen för detta är som tidigare nämnt att filtrera bort så mycket vita regioner som möjligt. Problemet är att på vissa bilder kan det filtreras bort för mycket och på andra för lite. Därför krävdes det mycket testning av olika bilder för att komma fram till bra tröskelvärden. I början uppstod det problem med att antingen ögonen eller munnen filtrerades bort och därmed kunde inte processen fortsätta. 
+Detta löstes genom att maskera bort den övre halvan av bilden för att inte få några onödiga bidrag när munnen skulle hittas. Den nedre halvan från munnen maskerades bort när ögonen skulle hittas, dessutom så konstruerades ytterligare en mask för att ytterligare förfina sökområdet. 
+
+I början av projektet fanns det aldrig en funktion för att kontrollera vilken ljusintensitet mun eller ögon skulle ha för att bli identifierade. I stället fanns det bara en tröskel som bestämde att så länge intensiteten var högre än 28 \% kunde det vara en mun eller ett öga. Detta ledde till stora problem eftersom ögonen kunde hittas på helt fel ställen. Även om den nya algoritmen för att hitta ögon blev bättre än att använda en tröskel finns det inget krav för att ögonen ska ligga i samma horisontella linje, istället körs algoritmen tills det bara finns korrekta vitområde kvar med kravet att det ska finnas möjliga punkter på båda sidor av ansiktet. Detta är dock inget som senare tas hänsyn till då algoritmen baserar sig på avståndet till munnen. Här kan problem uppstå ifall två punkter på samma sida av ansiktet används då rotationen är beroende av dessa.
+
+
+I \textit{generateSkinMap}-funktionen finns det en tröskel för att bestämma vilka färger som ska representera hud. Vi valde att ha en relativt smal tröskel för att varken för mörka eller ljusa färgområden ska identifieras som hud. Detta blir ett problem i högexponerade och lågexpenerade bilder. Vissa bilder är så ljusa att huden nästan är vit vilket gör det svårt att få ansiktsmasken att hamna rätt då centroidpunkten inte hamnar i mitten av ansiktet.
+
+Vår metod genererar sällan falska positiva resultat vilket är önskvärt då det i praktiska sammanhang innebär att en olegitimerad person inte kommer godkännas. Den får dock problem att identifiera personer då bilden har skalats ned, vilket kan bero på att upplösningen på ansiktet sjunker. Ett problem som inte hanteras väl av vår algoritm är icke-kvadratiska bilder. Efter att ansiktet hämtats kommer bilden skalas om till en kvadratisk bild vilket kan sträcka ut bilden på oönskade sätt. Det kan också vara en bidragande orsak till de dåliga resultaten vid nedskalingen.
 
 \begin{thebibliography}{99}
 
-\bibitem{history}
-\emph{History of face Recognition}
-\url{http://vismod.media.mit.edu/tech-reports/TR-516/node7.html}
+\bibitem{background}
+Inseong Kim, Joon Hyung Shim, and Jinkyu Yang \emph{Face detection} 2003
+\url{https://web.stanford.edu/class/ee368/Project_03/Project/reports/ee368group02.pdf}
+
+\bibitem{whitebalance}
+Matlab Central, Kye Taylor,\emph{ Whitebalance function } \\
+\url{http://se.mathworks.com/matlabcentral/fileexchange/41089-color-balance-demo-with-gpu-computing/content/GPUDemoCode/whitebalance.m}
+
+
+\bibitem{regionprops}
+MathWorks,\emph{ regionprops } \\
+\url{http://se.mathworks.com/help/images/ref/regionprops.html}
+
+\bibitem{FDiCI}
+Mohamed Abdel-Mottaleb, Anil K. Jain, Rein-Lien Hsu,\emph{ Face Detection in Color Images} \\
+\url{http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1000242}
+
+\bibitem{fitEllipse} 
+Walter Gander Gene H. Golub Rolf Strebel, \emph{Least-Squares Fitting of Circles and Ellipses,} December 1996
+\url{http://www.emis.de/journals/BBMS/Bulletin/sup962/gander.pdf}
+
+\bibitem{centroid}
+Wolfram MathWorld \emph{Geometric Centroid } \\
+\url{http://mathworld.wolfram.com/GeometricCentroid.html}
 
 \bibitem{eigenface}
 \emph{Eigenface Tutorial, Santiago Serrano} \\
 \url{www.pages.drexel.edu/~sis26/Eigenface%20Tutorial.htm}
-
-\bibitem{whitebalance}
-\emph{whitebalance function, Matlab Central, Kye Taylor} \\
-\url{http://se.mathworks.com/matlabcentral/fileexchange/41089-color-balance-demo-with-gpu-computing/content/GPUDemoCode/whitebalance.m}
-
 
 \end{thebibliography}
 
